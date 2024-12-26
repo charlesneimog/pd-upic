@@ -39,7 +39,9 @@ Sub-Events are SVGs draw inside SVGs draws.
 
 1. Create a new Pure Data patch.
 2. Go to Help → Find Externals → and Search for `pd-upic`.
-3. Create a new object `declare -lib pdlua`.
+3. Create a new object `declare -lib pdlua -path pd-upic`.
 4. Create one of the objects.
 
+
+!!! tip "You need pdlua"
 

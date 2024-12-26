@@ -323,7 +323,14 @@ function readSvg:in_1_read(x)
 			elseif object.name == "path" then
 				local onset = round(getPathOnset(system, object))
 				if pathIsInside(system, object) then
+					if self.objects[onset] == nil then
+						self.objects[onset] = {}
+					end
+					if onset > self.lastonset then
+						self.lastonset = onset
+					end
 					object.attr.system = system
+					object.attr.onset = onset
 					table.insert(system.objs, object)
 					table.insert(self.objects[onset], object)
 				end
@@ -336,7 +343,7 @@ end
 function readSvg:in_1_play(args)
 	local start = 0
 	if type(args[1]) == "number" then
-		start = args[1]
+		start = round(args[1])
 	end
 	self.start = start
 	self:player()
