@@ -35,7 +35,11 @@ function attrFilter:in_1_SvgObj(x)
 	end
 
 	if obj[self.attr] == self.value then
-		local outletId = tostring(self._object):match("userdata: (0x[%x]+)")
-		self:SvgObjOutlet(1, outletId, obj)
+		self:SvgObjOutlet(1, self.outletId, obj)
+	end
+
+	local objvalue = obj.attr[self.attr]
+	if objvalue == self.value then
+		self:SvgObjOutlet(1, self.outletId, obj)
 	end
 end
