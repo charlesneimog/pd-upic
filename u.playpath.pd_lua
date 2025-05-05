@@ -64,11 +64,14 @@ function playPath:in_1_SvgObj(x)
 
 		if self.objects[round(this_onset)] == nil then
 			local child = {}
-			child.x = points[i][1] - system.attr.x
-			child.y = points[i][2] - system.attr.y
+			child.attr = obj.attr
+			child.x = tonumber(points[i][1]) - system.attr.x
+			child.y = tonumber(points[i][2]) - system.attr.y
+			child.rely = 1 - (child.y / system.attr.height)
+			child.relx = child.x / system.attr.width
+
 			child.maxwidth = tonumber(system.attr.width)
 			child.maxheight = tonumber(system.attr.height)
-			child.attr = obj.attr
 			self.objects[round(this_onset)] = { child }
 		end
 	end

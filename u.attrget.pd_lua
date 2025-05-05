@@ -36,13 +36,22 @@ function attrGet:in_1_SvgObj(x)
 	--
 	local objvalue = obj[self.attr]
 	if objvalue then
-		self:outlet(1, "list", { objvalue })
+		-- check if the value has table inside
+		if type(objvalue) == "table" then
+			self:SvgObjOutlet(1, self.outletId, objvalue)
+		else
+			self:outlet(1, "list", { objvalue })
+		end
 	else
 		objvalue = obj.attr[self.attr]
 		if objvalue then
-			self:outlet(1, "list", { objvalue })
+			if type(objvalue) == "table" then
+				self:SvgObjOutlet(1, self.outletId, objvalue)
+			else
+				self:outlet(1, "list", { objvalue })
+			end
 		else
-			self:error("[u.attrget] No attribute found!")
+			self:error(string.format("[u.attrget] No attribute '%s' found!", self.attr))
 		end
 	end
 end
