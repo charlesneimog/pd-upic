@@ -153,12 +153,11 @@ function readSvg:getObjectCoords(object)
 			object.attr.x = x
 			object.attr.y = y
 			object.attr.width = self:get_path_width(object.attr)
-			-- object.points = self:
 			return 0, 0, x, y
 		end
-		pd.post("Not valid path")
+		self:error("[u.readsvg] not valid path")
 	else
-		pd.post(object.name .. " not implemented")
+		self:error("[u.readsvg] " .. object.name .. " not implemented")
 	end
 end
 
@@ -191,6 +190,10 @@ end
 function readSvg:cubicBezier(start, control1, control2, endPoint, numPoints)
 	numPoints = numPoints or 100
 	local points = {}
+
+	if numPoints > 10000 then
+		self:error("[u.readsvg] Very long path, avoid this please! I will try to process the path...")
+	end
 
 	for i = 0, numPoints do
 		local t = i / numPoints
@@ -306,6 +309,38 @@ function readSvg:getSystemDesc(system)
 	end
 end
 
+-- ─────────────────────────────────────
+function readSvg:nestObjects(objects)
+	local function nest(parentList)
+		for i = #parentList, 1, -1 do -- reverse loop for safe removal
+			local parent = parentList[i]
+			parent.child = {}
+			for j = #objects, 1, -1 do
+				local child = objects[j]
+				if child ~= parent and child.name ~= "path" and self:objIsInside(parent, child) then
+					-- compute relative positions
+					child.attr.relx = (child.attr.x - parent.attr.x) / parent.attr.width
+					child.attr.rely = 1 - ((child.attr.y - parent.attr.y) / parent.attr.height)
+					-- TODO: update onset
+
+					table.insert(parent.child, child)
+					table.remove(objects, j)
+				elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
+					-- TODO: update onset
+					table.insert(parent.child, child)
+					table.remove(objects, j)
+				end
+			end
+			if #parent.child > 0 then
+				nest(parent.child) -- recurse
+			else
+				parent.child = nil -- remove empty table
+			end
+		end
+	end
+	nest(objects)
+end
+
 --╭─────────────────────────────────────╮
 --│               Methods               │
 --╰─────────────────────────────────────╯
@@ -320,17 +355,17 @@ function readSvg:in_1_read(x)
 		svgfile = self._canvaspath .. svgfile
 	end
 
-	pd.post("[readsvg] Reading SVG file: " .. svgfile)
+	pd.post("[u.readsvg] Reading SVG file: " .. svgfile)
 
 	-- open svg file
 	f = io.open(svgfile, "r")
 	if f == nil then
-		self:error("[readsvg] File not found!")
+		self:error("[u.readsvg] File not found!")
 		return
 	end
 	local file = io.open(svgfile, "r")
 	if file == nil then
-		self:error("[readsvg] Error opening file!")
+		self:error("[u.readsvg] Error opening file!")
 		return
 	end
 
@@ -338,7 +373,7 @@ function readSvg:in_1_read(x)
 	local xml = file:read("*all")
 	local ok = file:close()
 	if not ok then
-		self:error("[readsvg] Error closing file!")
+		self:error("[u.readsvg] Error closing file!")
 		return
 	end
 
@@ -366,12 +401,18 @@ function readSvg:in_1_read(x)
 		self:parseStyle(node, node.attr.style)
 	end
 
-	local systems = {}
-	local objects = {}
+	local systems = {} -- all systems
+	local objects = {} -- all objects that are not systems
 
 	local systemCount = 0
 	for _, node in ipairs(objs) do
 		if node.name == "rect" and node.attr.stroke == "#000000" and node.attr.fill == "none" then
+			for key, value in pairs(node.attr) do
+				local num = tonumber(value)
+				if num then
+					node.attr[key] = num
+				end
+			end
 			table.insert(systems, node)
 			systemCount = systemCount + 1
 		else
@@ -382,64 +423,57 @@ function readSvg:in_1_read(x)
 	for _, system in ipairs(systems) do
 		self:getSystemDesc(system)
 		if not system.attr.start or not system.attr.duration then
-			self:error("[readsvg] System description is missing!")
+			self:error("[u.readsvg] System description is missing!")
 			return
 		end
 
-		for key, value in pairs(system.attr) do
-			local num = tonumber(value)
-			if num then
-				system.attr[key] = num
-			end
-		end
-
 		system.objs = {}
+		local remaining = {}
+
 		for _, object in ipairs(objects) do
 			if self:objIsInside(system, object) and object.name ~= "path" then
 				object.attr.duration = self:getObjDuration(system, object)
 				object.attr.onset = self:getObjOnset(system, object)
 				object.attr.rely = 1 - ((object.attr.y - system.attr.y) / system.attr.height)
 				object.attr.relx = (object.attr.x - system.attr.x) / system.attr.width
-
 				object.attr.system = system
-
 				local onset = self:round(object.attr.onset)
 				if onset > self.lastonset then
 					self.lastonset = onset
 				end
-				if self.objects[onset] == nil then
-					self.objects[onset] = {}
-				end
-
-				table.insert(system.objs, object)
-				table.insert(self.objects[onset], object)
-				self.objects_count = self.objects_count + 1
+				table.insert(remaining, object)
 			end
 
 			if object.name == "path" then
 				local onset = self:round(self:getPathOnset(system, object))
 				if self:pathIsInside(system, object) then
-					if self.objects[onset] == nil then
-						self.objects[onset] = {}
-					end
 					if onset > self.lastonset then
 						self.lastonset = onset
 					end
 					object.attr.system = system
 					object.attr.onset = onset
-					table.insert(system.objs, object)
-					table.insert(self.objects[onset], object)
-					self.objects_count = self.objects_count + 1
+					table.insert(remaining, object)
 				end
 			end
+		end
+
+		self:nestObjects(remaining)
+		system.objs = remaining
+		for _, v in ipairs(remaining) do
+			local onset = self:round(v.attr.onset)
+			if self.objects[onset] == nil then
+				self.objects[onset] = {}
+			end
+			table.insert(self.objects[onset], v)
+			self.objects_count = self.objects_count + 1
 		end
 	end
 
 	if self.objects_count == 0 then
-		self:error("[readsvg] No objects found!")
+		self:error("[u.readsvg] No objects found!")
 		return
 	end
-	pd.post("[readsvg] There are " .. self.objects_count .. " objects found")
+	pd.post("[u.readsvg] Found " .. self.objects_count .. " objects")
 end
 
 -- ─────────────────────────────────────
@@ -450,7 +484,7 @@ function readSvg:in_1_play(args)
 	end
 	self.start = start
 	if self.objects_count == 0 then
-		self:error("[readsvg] No objects found!")
+		self:error("[u.readsvg] No objects found!")
 		return
 	end
 

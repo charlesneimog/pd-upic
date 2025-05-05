@@ -35,6 +35,7 @@ function attrGet:in_1_SvgObj(x)
 	end
 	--
 	local objvalue = obj[self.attr]
+
 	if objvalue then
 		-- check if the value has table inside
 		if type(objvalue) == "table" then
@@ -54,4 +55,9 @@ function attrGet:in_1_SvgObj(x)
 			self:error(string.format("[u.attrget] No attribute '%s' found!", self.attr))
 		end
 	end
+end
+
+-- ─────────────────────────────────────
+function attrGet:in_1_reload()
+	self:dofilex(self._scriptname)
 end
