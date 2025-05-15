@@ -20,7 +20,7 @@ end
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
 
-local playPath = pd.Class:new():register("u.playpath")
+local playPath = pd.Class:new():register("l.playpath")
 
 function playPath:initialize(_, _)
 	self.inlets = 1

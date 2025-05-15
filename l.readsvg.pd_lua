@@ -10,7 +10,7 @@ local mypd = require(script_path() .. "libs/mypd")
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
 
-local readSvg = pd.Class:new():register("u.readsvg")
+local readSvg = pd.Class:new():register("l.readsvg")
 
 function readSvg:initialize(_, _)
 	self.inlets = 1

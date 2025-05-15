@@ -8,7 +8,7 @@ local mypd = require(script_path() .. "/libs/mypd")
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
 
-local attrgetall = pd.Class:new():register("u.attrgetall")
+local attrgetall = pd.Class:new():register("l.attrgetall")
 
 -- ─────────────────────────────────────
 function attrgetall:initialize(_, argv)
