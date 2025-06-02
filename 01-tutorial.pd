@@ -1,0 +1,12 @@
+#N canvas 965 30 938 1001 10;
+#X declare -lib neimog;
+#X obj 6 7 declare -lib neimog;
+#X obj 6 86 l.readsvg;
+#X msg 24 55 play;
+#X msg 6 34 read simple-score.svg;
+#X msg 83 63 reload;
+#X obj 6 168 l.attrfilter fill #ff0000;
+#X connect 1 0 5 0;
+#X connect 2 0 1 0;
+#X connect 3 0 1 0;
+#X connect 4 0 1 0;

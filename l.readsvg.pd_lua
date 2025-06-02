@@ -404,6 +404,7 @@ function readSvg:in_1_read(x)
 	local systems = {} -- all systems
 	local objects = {} -- all objects that are not systems
 
+	-- get all systems
 	local systemCount = 0
 	for _, node in ipairs(objs) do
 		if node.name == "rect" and node.attr.stroke == "#000000" and node.attr.fill == "none" then
@@ -432,6 +433,7 @@ function readSvg:in_1_read(x)
 
 		for _, object in ipairs(objects) do
 			if self:objIsInside(system, object) and object.name ~= "path" then
+				object.attr.name = object.name
 				object.attr.duration = self:getObjDuration(system, object)
 				object.attr.onset = self:getObjOnset(system, object)
 				object.attr.rely = 1 - ((object.attr.y - system.attr.y) / system.attr.height)
