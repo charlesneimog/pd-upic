@@ -136,8 +136,13 @@ function readSvg:getObjectCoords(object)
 		local objHeight = tonumber(object.attr.height) or 0
 		local objX = tonumber(object.attr.x) or 0
 		local objY = tonumber(object.attr.y) or 0
+		object.attr.x = objX
+		object.attr.y = objY
+		object.attr.width = objWidth
+		object.attr.height = objHeight
+
 		return objWidth, objHeight, objX, objY
-	elseif object.name == "ellipse" then
+	elseif object.name == "ellipse" or object.name == "circle" then
 		local objWidth, objHeight, objX, objY = self:applyTransformation(object)
 		object.attr.x = objX
 		object.attr.y = objY
@@ -153,6 +158,7 @@ function readSvg:getObjectCoords(object)
 			object.attr.x = x
 			object.attr.y = y
 			object.attr.width = self:get_path_width(object.attr)
+			object.attr.height = 0
 			return 0, 0, x, y
 		end
 		self:error("[u.readsvg] not valid path")
@@ -181,13 +187,13 @@ end
 
 -- ─────────────────────────────────────
 function readSvg:getObjOnset(system, obj)
-	local onset = system.attr.start + (system.attr.duration * obj.attr.x / system.attr.width)
+	local onset = system.attr.onset + (system.attr.duration * obj.attr.x / system.attr.width)
 	obj.attr.onset = onset
 	return onset
 end
 
 -- ─────────────────────────────────────
-function readSvg:cubicBezier(start, control1, control2, endPoint, numPoints)
+function readSvg:cubicBezier(onset, control1, control2, endPoint, numPoints)
 	numPoints = numPoints or 100
 	local points = {}
 
@@ -197,11 +203,11 @@ function readSvg:cubicBezier(start, control1, control2, endPoint, numPoints)
 
 	for i = 0, numPoints do
 		local t = i / numPoints
-		local x = (1 - t) ^ 3 * start[1]
+		local x = (1 - t) ^ 3 * onset[1]
 			+ 3 * (1 - t) ^ 2 * t * control1[1]
 			+ 3 * (1 - t) * t ^ 2 * control2[1]
 			+ t ^ 3 * endPoint[1]
-		local y = (1 - t) ^ 3 * start[2]
+		local y = (1 - t) ^ 3 * onset[2]
 			+ 3 * (1 - t) ^ 2 * t * control1[2]
 			+ 3 * (1 - t) * t ^ 2 * control2[2]
 			+ t ^ 3 * endPoint[2]
@@ -268,7 +274,7 @@ function readSvg:getPathOnset(system, obj)
 	local d = obj.attr.d
 	local points = self:parseSvgPath(d)
 	obj.points = points
-	local onset = system.attr.start + (system.attr.duration * points[1][1] / system.attr.width)
+	local onset = system.attr.onset + (system.attr.duration * points[1][1] / system.attr.width)
 	return onset
 end
 
@@ -310,7 +316,7 @@ function readSvg:getSystemDesc(system)
 end
 
 -- ─────────────────────────────────────
-function readSvg:nestObjects(objects)
+function readSvg:nestedObjects(objects)
 	local function nest(parentList)
 		for i = #parentList, 1, -1 do -- reverse loop for safe removal
 			local parent = parentList[i]
@@ -318,15 +324,11 @@ function readSvg:nestObjects(objects)
 			for j = #objects, 1, -1 do
 				local child = objects[j]
 				if child ~= parent and child.name ~= "path" and self:objIsInside(parent, child) then
-					-- compute relative positions
 					child.attr.relx = (child.attr.x - parent.attr.x) / parent.attr.width
 					child.attr.rely = 1 - ((child.attr.y - parent.attr.y) / parent.attr.height)
-					-- TODO: update onset
-
 					table.insert(parent.child, child)
 					table.remove(objects, j)
 				elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
-					-- TODO: update onset
 					table.insert(parent.child, child)
 					table.remove(objects, j)
 				end
@@ -379,7 +381,7 @@ function readSvg:in_1_read(x)
 
 	-- parse svg file
 	local doc = slaxml:dom(xml)
-	local goodelem = { rect = true, ellipse = true, path = true }
+	local goodelem = { rect = true, circle = true, ellipse = true, path = true }
 	local objs = {}
 
 	local function traverse(node)
@@ -423,7 +425,7 @@ function readSvg:in_1_read(x)
 
 	for _, system in ipairs(systems) do
 		self:getSystemDesc(system)
-		if not system.attr.start or not system.attr.duration then
+		if not system.attr.onset or not system.attr.duration then
 			self:error("[u.readsvg] System description is missing!")
 			return
 		end
@@ -459,8 +461,7 @@ function readSvg:in_1_read(x)
 			end
 		end
 
-		self:nestObjects(remaining)
-		system.objs = remaining
+		self:nestedObjects(remaining)
 		for _, v in ipairs(remaining) do
 			local onset = self:round(v.attr.onset)
 			if self.objects[onset] == nil then
@@ -480,11 +481,11 @@ end
 
 -- ─────────────────────────────────────
 function readSvg:in_1_play(args)
-	local start = 0
+	local onset = 0
 	if type(args[1]) == "number" then
-		start = self:round(args[1])
+		onset = self:round(args[1])
 	end
-	self.start = start
+	self.onset = onset
 	if self.objects_count == 0 then
 		self:error("[u.readsvg] No objects found!")
 		return
@@ -500,7 +501,7 @@ end
 
 -- ─────────────────────────────────────
 function readSvg:player()
-	local object = self.objects[self.start]
+	local object = self.objects[self.onset]
 	if object ~= nil then
 		if #object == 1 then
 			self:SvgObjOutlet(1, self.outletId, object[1])
@@ -511,11 +512,11 @@ function readSvg:player()
 		end
 	end
 
-	if self.start > self.lastonset then
+	if self.onset > self.lastonset then
 		self.clock:unset()
-		self.start = 0
+		self.onset = 0
 	else
-		self.start = self.start + 1
+		self.onset = self.onset + 1
 		self.clock:delay(1)
 	end
 end

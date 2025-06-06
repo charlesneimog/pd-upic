@@ -18,8 +18,14 @@ function attrFilter:initialize(_, argv)
 	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
 	self.attr = argv[1]
 	self.value = argv[2]
-	if self.attr == nil or self.value == nil then
-		self:error("[u.attrfilter] No filter provided!")
+	if self.attr == nil then
+		self:error("[u.attrfilter] No filter attribute provided! Examples are: 'fill', 'stroke', 'id' and others")
+		return false
+	end
+	if self.value == nil then
+		self:error(
+			"[u.attrfilter] No filter attribute value provided! Examples are: '#ff0000' for stroke or fill, 'path12' for id and others"
+		)
 		return false
 	end
 

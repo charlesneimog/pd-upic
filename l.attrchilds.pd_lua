@@ -8,38 +8,34 @@ local mypd = require(script_path() .. "/libs/mypd")
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
 
-local attrPrint = pd.Class:new():register("l.attrprint")
+local attrChilds = pd.Class:new():register("l.attrchilds")
 
 -- ─────────────────────────────────────
-function attrPrint:initialize(_, argv)
+function attrChilds:initialize(_, argv)
 	self.inlets = 1
+	self.outlets = 1
+	self.objects = {}
+	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
+
 	return true
 end
 
 -- ─────────────────────────────────────
-local function attrprint(k, v)
-	-- check if v is table
-	if type(v) == "table" then
-		for index, value in ipairs(v) do
-			attrprint(index, value)
-		end
-	else
-		pd.post(k .. ": " .. v)
-	end
-end
--- ─────────────────────────────────────
-function attrPrint:in_1_SvgObj(x)
-	local obj = pd[x[1]]
-	if obj == nil then
-		self:error("[u.attrprint] No object found!")
+function attrChilds:in_1_SvgObj(x)
+	local id = x[1]
+	local obj = pd[id]
+
+	if not obj then
+		self:error("[u.attrget] No object found!")
 		return
 	end
-	for k, v in pairs(obj) do
-		attrprint(k, v)
+
+	for i = 1, #obj.child do
+		self:SvgObjOutlet(1, self.outletId, obj.child[i])
 	end
 end
 
 -- ─────────────────────────────────────
-function attrPrint:in_1_reload()
+function attrChilds:in_1_reload()
 	self:dofilex(self._scriptname)
 end

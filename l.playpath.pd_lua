@@ -45,7 +45,7 @@ function playPath:in_1_SvgObj(x)
 	end
 	self.objects = {}
 
-	local obj = pd[x[1]]
+	local obj = pd[x[1]] -- defined inside mypd
 	if not obj then
 		self:error("[u.attrfilter] No object found!")
 		return
@@ -57,33 +57,42 @@ function playPath:in_1_SvgObj(x)
 
 	self.points = {}
 	for i = 1, #points do
-		local this_onset = system.attr.start + (system.attr.duration * points[i][1] / system.attr.width) - mainOnset
+		local this_onset = system.attr.onset + (system.attr.duration * points[i][1] / system.attr.width) - mainOnset
+        this_onset = round(this_onset)
+        if this_onset < 0 then
+            this_onset = 0
+        end
+
 		if this_onset > self.lastonset then
 			self.lastonset = this_onset
 		end
 
 		if self.objects[round(this_onset)] == nil then
 			local child = {}
-			child.attr = obj.attr
-			child.x = tonumber(points[i][1]) - system.attr.x
-			child.y = tonumber(points[i][2]) - system.attr.y
-			child.rely = 1 - (child.y / system.attr.height)
-			child.relx = child.x / system.attr.width
+			child.attr = {}
+            child.attr.fill = obj.attr.fill
+            child.attr.stroke = obj.attr.stroke
+            child.attr["stroke-width"] = obj.attr["stroke-width"]
 
-			child.maxwidth = tonumber(system.attr.width)
-			child.maxheight = tonumber(system.attr.height)
+            child.attr.onset = this_onset
+			child.attr.x = tonumber(points[i][1]) - system.attr.x
+			child.attr.y = tonumber(points[i][2]) - system.attr.y
+			child.attr.rely = 1 - (child.attr.y / system.attr.height)
+			child.attr.relx = child.attr.x / system.attr.width
+			child.attr.maxwidth = tonumber(system.attr.width)
+			child.attr.maxheight = tonumber(system.attr.height)
 			self.objects[round(this_onset)] = { child }
 		end
 	end
 
 	self.isplaying = true
-	self.start = 0
+	self.onset = 0
 	self:player()
 end
 
 -- ─────────────────────────────────────
 function playPath:player()
-	local object = self.objects[self.start]
+	local object = self.objects[self.onset]
 	if object ~= nil then
 		if #object == 1 then
 			self:SvgObjOutlet(1, self.outletId, object[1])
@@ -94,12 +103,12 @@ function playPath:player()
 		end
 	end
 
-	if self.start > self.lastonset then
+	if self.onset > self.lastonset then
 		self.clock:unset()
-		self.start = 0
+		self.onset = 0
 		self.isplaying = false
 	else
-		self.start = self.start + 1
+		self.onset = self.onset + 1
 		self.clock:delay(1)
 	end
 end
