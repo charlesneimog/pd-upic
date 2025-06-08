@@ -293,7 +293,7 @@ function readSvg:pathIsInside(system, obj)
 end
 
 -- ─────────────────────────────────────
-function readSvg:getSystemDesc(system)
+function readSvg:getObjDesc(system)
 	local function parseToTable(input)
 		for key, value in input:gmatch("(%w+)%s+([^,]+)") do
 			if value:find("%s") then
@@ -320,23 +320,23 @@ function readSvg:nestedObjects(objects)
 	local function nest(parentList)
 		for i = #parentList, 1, -1 do -- reverse loop for safe removal
 			local parent = parentList[i]
-			parent.child = {}
+			parent.attr.childs = {}
 			for j = #objects, 1, -1 do
 				local child = objects[j]
 				if child ~= parent and child.name ~= "path" and self:objIsInside(parent, child) then
-					child.attr.relx = (child.attr.x - parent.attr.x) / parent.attr.width
-					child.attr.rely = 1 - ((child.attr.y - parent.attr.y) / parent.attr.height)
-					table.insert(parent.child, child)
+					child.attr.system = parent
+					table.insert(parent.attr.childs, child)
 					table.remove(objects, j)
 				elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
-					table.insert(parent.child, child)
+					child.attr.system = parent
+					table.insert(parent.attr.childs, child)
 					table.remove(objects, j)
 				end
 			end
-			if #parent.child > 0 then
-				nest(parent.child) -- recurse
+			if #parent.attr.childs > 0 then
+				nest(parent.attr.childs) -- recurse
 			else
-				parent.child = nil -- remove empty table
+				parent.attr.childs = nil -- remove empty table
 			end
 		end
 	end
@@ -424,7 +424,7 @@ function readSvg:in_1_read(x)
 	end
 
 	for _, system in ipairs(systems) do
-		self:getSystemDesc(system)
+		self:getObjDesc(system)
 		if not system.attr.onset or not system.attr.duration then
 			self:error("[u.readsvg] System description is missing!")
 			return
@@ -445,11 +445,13 @@ function readSvg:in_1_read(x)
 				if onset > self.lastonset then
 					self.lastonset = onset
 				end
+				self:getObjDesc(object)
 				table.insert(remaining, object)
 			end
 
 			if object.name == "path" then
 				local onset = self:round(self:getPathOnset(system, object))
+				self:getObjDesc(object)
 				if self:pathIsInside(system, object) then
 					if onset > self.lastonset then
 						self.lastonset = onset
@@ -476,7 +478,7 @@ function readSvg:in_1_read(x)
 		self:error("[u.readsvg] No objects found!")
 		return
 	end
-	pd.post("[u.readsvg] Found " .. self.objects_count .. " objects")
+	pd.post("[u.readsvg] Found " .. self.objects_count .. " objects\n")
 end
 
 -- ─────────────────────────────────────

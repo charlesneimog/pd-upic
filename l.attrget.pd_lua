@@ -13,14 +13,14 @@ local attrGet = pd.Class:new():register("l.attrget")
 -- ─────────────────────────────────────
 function attrGet:initialize(_, argv)
 	self.inlets = 1
-	self.outlets = 1
 	self.objects = {}
 	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
-	self.attr = argv[1]
-	if self.attr == nil then
+	if argv[1] == nil then
 		self:error("[u.attrfilter] No filter provided!")
 		return false
 	end
+	self.attr = argv
+	self.outlets = #argv
 	return true
 end
 
@@ -29,30 +29,50 @@ function attrGet:in_1_SvgObj(x)
 	local id = x[1]
 	local obj = pd[id]
 
-	if not obj then
+	if obj == nil then
 		self:error("[u.attrget] No object found!")
 		return
 	end
-	--
-	local objvalue = obj[self.attr]
 
-	if objvalue then
-		-- check if the value has table inside
-		if type(objvalue) == "table" then
-			self:SvgObjOutlet(1, self.outletId, objvalue)
-		else
-			self:outlet(1, "list", { objvalue })
+	for i = #self.attr, 1, -1 do
+		local objvalue = obj.attr[self.attr[i]]
+        if self.attr[i] == "childs" then
+			for _, v in pairs(obj.attr.childs) do
+				self:SvgObjOutlet(i, self.outletId, v)
+			end
+			return
 		end
-	else
-		objvalue = obj.attr[self.attr]
+
 		if objvalue then
+			-- check if the value has table inside
 			if type(objvalue) == "table" then
-				self:SvgObjOutlet(1, self.outletId, objvalue)
+				self:SvgObjOutlet(i, self.outletId, objvalue)
 			else
-				self:outlet(1, "list", { objvalue })
+				self:outlet(i, "list", { objvalue })
 			end
 		else
-			self:error(string.format("[u.attrget] No attribute '%s' found!", self.attr))
+			if objvalue then
+				if type(objvalue) == "table" then
+					local is_list = true
+					local count = 0
+					for k, _ in pairs(objvalue) do
+						count = count + 1
+						if type(k) ~= "number" or k ~= count then
+							is_list = false
+							break
+						end
+					end
+					if is_list then
+						self:outlet(i, "list", objvalue)
+					else
+						self:SvgObjOutlet(i, self.outletId, objvalue)
+					end
+				else
+					self:outlet(i, "list", { objvalue })
+				end
+			else
+				self:error(string.format("[u.attrget] No attribute '%s' found!", self.attr))
+			end
 		end
 	end
 end
