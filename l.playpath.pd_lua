@@ -51,17 +51,16 @@ function playPath:in_1_SvgObj(x)
 		return
 	end
 
-	local system = obj.attr.system
+	local system = obj.attr.mainsystem
+	local parent = obj.attr.system
 	local points = obj.points
-	local mainOnset = obj.attr.onset
-
 	self.points = {}
 	for i = 1, #points do
-		local this_onset = system.attr.onset + (system.attr.duration * points[i][1] / system.attr.width) - mainOnset
-        this_onset = round(this_onset)
-        if this_onset < 0 then
-            this_onset = 0
-        end
+		local this_onset = ((points[i][1] - system.attr.x) / system.attr.width) * system.attr.duration
+		this_onset = round(this_onset - parent.attr.onset)
+		if this_onset < 0 then
+			this_onset = 0
+		end
 
 		if this_onset > self.lastonset then
 			self.lastonset = this_onset
@@ -70,11 +69,11 @@ function playPath:in_1_SvgObj(x)
 		if self.objects[round(this_onset)] == nil then
 			local child = {}
 			child.attr = {}
-            child.attr.fill = obj.attr.fill
-            child.attr.stroke = obj.attr.stroke
-            child.attr["stroke-width"] = obj.attr["stroke-width"]
+			child.attr.fill = obj.attr.fill
+			child.attr.stroke = obj.attr.stroke
+			child.attr["stroke-width"] = obj.attr["stroke-width"]
 
-            child.attr.onset = this_onset
+			child.attr.onset = this_onset
 			child.attr.x = tonumber(points[i][1]) - system.attr.x
 			child.attr.y = tonumber(points[i][2]) - system.attr.y
 			child.attr.rely = 1 - (child.attr.y / system.attr.height)

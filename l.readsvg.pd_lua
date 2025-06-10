@@ -90,15 +90,15 @@ function readSvg:applyTransformation(object)
 	return objWidth, objHeight, objX, objY
 end
 
--- ─────────────────────────────────────
-local function print_table(tbl)
-	local result = "{ "
-	for k, v in pairs(tbl) do
-		result = result .. "[" .. tostring(k) .. "] = " .. tostring(v) .. ", "
-	end
-	result = result .. "}"
-	return result
-end
+-- -- ─────────────────────────────────────
+-- local function print_table(tbl)
+-- 	local result = "{ "
+-- 	for k, v in pairs(tbl) do
+-- 		result = result .. "[" .. tostring(k) .. "] = " .. tostring(v) .. ", "
+-- 	end
+-- 	result = result .. "}"
+-- 	return result
+-- end
 
 -- ─────────────────────────────────────
 function readSvg:get_path_width(path)
@@ -110,7 +110,7 @@ function readSvg:get_path_width(path)
 
 	local min_x, max_x = nil, nil
 
-	for x_str, y_str in string.gmatch(d, "([%-%.%d]+),([%-%.%d]+)") do
+	for x_str, _ in string.gmatch(d, "([%-%.%d]+),([%-%.%d]+)") do
 		local x = tonumber(x_str)
 		if x then
 			if not min_x or x < min_x then
@@ -187,7 +187,7 @@ end
 
 -- ─────────────────────────────────────
 function readSvg:getObjOnset(system, obj)
-	local onset = system.attr.onset + (system.attr.duration * obj.attr.x / system.attr.width)
+	local onset = system.attr.onset + ((obj.attr.x - system.attr.x) / system.attr.width) * system.attr.duration
 	obj.attr.onset = onset
 	return onset
 end
@@ -274,7 +274,7 @@ function readSvg:getPathOnset(system, obj)
 	local d = obj.attr.d
 	local points = self:parseSvgPath(d)
 	obj.points = points
-	local onset = system.attr.onset + (system.attr.duration * points[1][1] / system.attr.width)
+	local onset = system.attr.onset + ((points[1][1] - system.attr.x) / system.attr.width) * system.attr.duration
 	return onset
 end
 
@@ -316,27 +316,36 @@ function readSvg:getObjDesc(system)
 end
 
 -- ─────────────────────────────────────
-function readSvg:nestedObjects(objects)
+function readSvg:nestedObjects(objects, mainsystem)
 	local function nest(parentList)
 		for i = #parentList, 1, -1 do -- reverse loop for safe removal
 			local parent = parentList[i]
-			parent.attr.childs = {}
-			for j = #objects, 1, -1 do
-				local child = objects[j]
-				if child ~= parent and child.name ~= "path" and self:objIsInside(parent, child) then
-					child.attr.system = parent
-					table.insert(parent.attr.childs, child)
-					table.remove(objects, j)
-				elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
-					child.attr.system = parent
-					table.insert(parent.attr.childs, child)
-					table.remove(objects, j)
+			if parent ~= nil then
+				parent.attr.childs = {}
+				for j = #objects, 1, -1 do
+					local child = objects[j]
+					if child ~= parent and child.name ~= "path" and self:objIsInside(parent, child) then
+						child.attr.mainsystem = mainsystem
+						child.attr.system = parent
+						child.attr.onset = child.attr.onset - parent.attr.onset
+						child.attr.duration = self:getObjDuration(mainsystem, child)
+						table.insert(parent.attr.childs, child)
+						table.remove(objects, j)
+					elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
+						child.attr.mainsystem = mainsystem
+						child.attr.system = parent
+						pd.post("parent onset " .. parent.attr.onset)
+						child.attr.onset = child.attr.onset - parent.attr.onset
+						child.attr.duration = self:getObjDuration(mainsystem, child)
+						table.insert(parent.attr.childs, child)
+						table.remove(objects, j)
+					end
 				end
-			end
-			if #parent.attr.childs > 0 then
-				nest(parent.attr.childs) -- recurse
-			else
-				parent.attr.childs = nil -- remove empty table
+				if #parent.attr.childs > 0 then
+					nest(parent.attr.childs) -- recurse
+				else
+					parent.attr.childs = nil -- remove empty table
+				end
 			end
 		end
 	end
@@ -426,7 +435,7 @@ function readSvg:in_1_read(x)
 	for _, system in ipairs(systems) do
 		self:getObjDesc(system)
 		if not system.attr.onset or not system.attr.duration then
-			self:error("[u.readsvg] System description is missing!")
+			self:error("[u.readsvg] System description parameters onset or duration is missing!")
 			return
 		end
 
@@ -450,8 +459,8 @@ function readSvg:in_1_read(x)
 			end
 
 			if object.name == "path" then
-				local onset = self:round(self:getPathOnset(system, object))
 				self:getObjDesc(object)
+				local onset = self:round(self:getPathOnset(system, object))
 				if self:pathIsInside(system, object) then
 					if onset > self.lastonset then
 						self.lastonset = onset
@@ -463,7 +472,7 @@ function readSvg:in_1_read(x)
 			end
 		end
 
-		self:nestedObjects(remaining)
+		self:nestedObjects(remaining, system)
 		for _, v in ipairs(remaining) do
 			local onset = self:round(v.attr.onset)
 			if self.objects[onset] == nil then

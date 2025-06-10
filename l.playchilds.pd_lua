@@ -43,19 +43,21 @@ function playChilds:in_1_SvgObj(x)
 			if onset > self.lastonset then
 				self.lastonset = onset
 			end
-			local key = "ms" .. onset
+			local key = "ms" .. math.floor(onset)
+			pd.post(key)
 			if self.objects[key] == nil then
 				self.objects[key] = {}
 			end
 			table.insert(self.objects[key], child)
 		end
 	end
+
 	self.clock:delay(0)
 end
 
 -- ─────────────────────────────────────
 function playChilds:player()
-	local key = "ms" .. self.onset
+	local key = "ms" .. math.floor(self.onset)
 	local object = self.objects[key]
 	if object ~= nil then
 		if #object == 1 then
