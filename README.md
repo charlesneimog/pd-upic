@@ -21,6 +21,8 @@
    
 ## List of Objects
 
+Check [https://charlesneimog.github.io/blog/posts/pd-upic.html](https://charlesneimog.github.io/blog/posts/pd-upic.html) to learn how to build the SVG file.
+
 ### Playback
 
 - **`u.readsvg`**: 
