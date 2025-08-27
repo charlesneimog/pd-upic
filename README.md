@@ -25,33 +25,33 @@ Check [https://charlesneimog.github.io/blog/posts/pd-upic.html](https://charlesn
 
 ### Playback
 
-- **`u.readsvg`**: 
+- **`l.readsvg`**: 
   - Method: `read` the SVG file, requires the SVG file.
   - Method: `play` the SVG file;
   - Method: `stop` the player;
     
 ### Message Retrieval
 
-- **`u.getmsgs`**: 
+- **`l.getmsgs`**: 
   - Method: Get all messages set in the properties text input inside Inkscape.
   
 ### Attributes
 
-- **`u.attrfilter`**: Filter object by attribute.
+- **`l.attrfilter`**: Filter object by attribute.
     - Available attributes are: `fill`, `stroke`, `type`, `duration`, `onset`. 
   
-- **`u.attrget`**: Method to get the values of some attribute for some SVG form.
+- **`l.attrget`**: Method to get the values of some attribute for some SVG form.
 
 ### Sub-Events
 
 Sub-Events are SVGs draw inside SVGs draws. 
 
-- **`u.getchilds`**: Returns a list with all the child of the event.  
-- **`u.playchilds`**: Put the children on time, playing following the onset of the father.
+- **`l.getchilds`**: Returns a list with all the child of the event.  
+- **`l.playchilds`**: Put the children on time, playing following the onset of the father.
 
 ### Paths
-- **`u.getpath`**: Get the complete path of paths.
-- **`u.playpath`**: Play the complete path of paths.
+- **`l.getpath`**: Get the complete path of paths.
+- **`l.playpath`**: Play the complete path of paths.
 
 
 
