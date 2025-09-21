@@ -40,11 +40,13 @@ function playChilds:in_1_SvgObj(x)
 	if obj.attr.childs ~= nil then
 		for _, child in pairs(obj.attr.childs) do
 			local onset = child.attr.onset
+			if obj.attr.name == "ellipse" or obj.attr.name == "circle" then
+				onset = child.attr.startonset
+			end
 			if onset > self.lastonset then
 				self.lastonset = onset
 			end
 			local key = "ms" .. math.floor(onset)
-			pd.post(key)
 			if self.objects[key] == nil then
 				self.objects[key] = {}
 			end

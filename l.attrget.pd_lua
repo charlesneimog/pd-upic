@@ -44,7 +44,6 @@ function attrGet:in_1_SvgObj(x)
 		end
 
 		if objvalue then
-			-- check if the value has table inside
 			if type(objvalue) == "table" then
 				self:SvgObjOutlet(i, self.outletId, objvalue)
 			else

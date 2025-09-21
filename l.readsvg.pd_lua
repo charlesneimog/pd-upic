@@ -90,16 +90,6 @@ function readSvg:applyTransformation(object)
 	return objWidth, objHeight, objX, objY
 end
 
--- -- ─────────────────────────────────────
--- local function print_table(tbl)
--- 	local result = "{ "
--- 	for k, v in pairs(tbl) do
--- 		result = result .. "[" .. tostring(k) .. "] = " .. tostring(v) .. ", "
--- 	end
--- 	result = result .. "}"
--- 	return result
--- end
-
 -- ─────────────────────────────────────
 function readSvg:get_path_width(path)
 	local d = path.d
@@ -140,12 +130,14 @@ function readSvg:getObjectCoords(object)
 		object.attr.y = objY
 		object.attr.width = objWidth
 		object.attr.height = objHeight
-
 		return objWidth, objHeight, objX, objY
 	elseif object.name == "ellipse" or object.name == "circle" then
+		-- NOTE: me parece que em circulos o x e y fica no meio, aqui corrigimos para ser o inicio
 		local objWidth, objHeight, objX, objY = self:applyTransformation(object)
 		object.attr.x = objX
 		object.attr.y = objY
+		object.attr.startx = objX - objWidth / 2
+		object.attr.starty = objY - objHeight / 2
 		object.attr.width = objWidth
 		object.attr.height = objHeight
 		return objWidth, objHeight, objX, objY
@@ -189,6 +181,12 @@ end
 function readSvg:getObjOnset(system, obj)
 	local onset = system.attr.onset + ((obj.attr.x - system.attr.x) / system.attr.width) * system.attr.duration
 	obj.attr.onset = onset
+	if obj.attr.name == "ellipse" or obj.attr.name == "circle" then
+		local startonset = system.attr.onset
+			+ ((obj.attr.startx - system.attr.x) / system.attr.width) * system.attr.duration
+		obj.attr.startonset = startonset
+	end
+
 	return onset
 end
 
@@ -325,18 +323,26 @@ function readSvg:nestedObjects(objects, mainsystem)
 				for j = #objects, 1, -1 do
 					local child = objects[j]
 					if child ~= parent and child.name ~= "path" and self:objIsInside(parent, child) then
+						child.attr.name = child.name
 						child.attr.mainsystem = mainsystem
 						child.attr.system = parent
 						child.attr.onset = child.attr.onset - parent.attr.onset
 						child.attr.duration = self:getObjDuration(mainsystem, child)
+						child.attr.rely = 1 - ((child.attr.y - parent.attr.y) / parent.attr.height)
+						child.attr.relx = (child.attr.x - parent.attr.x) / parent.attr.width
+						child.attr.relwidth = child.attr.width / parent.attr.width
+						child.attr.relheight = child.attr.height / parent.attr.height
 						table.insert(parent.attr.childs, child)
 						table.remove(objects, j)
 					elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
+						child.attr.size = child["stroke-width"]
+						child.attr.name = "path"
 						child.attr.mainsystem = mainsystem
 						child.attr.system = parent
-						pd.post("parent onset " .. parent.attr.onset)
 						child.attr.onset = child.attr.onset - parent.attr.onset
 						child.attr.duration = self:getObjDuration(mainsystem, child)
+						child.attr.rely = 1 - ((child.attr.y - parent.attr.y) / parent.attr.height)
+						child.attr.relx = (child.attr.x - parent.attr.x) / parent.attr.width
 						table.insert(parent.attr.childs, child)
 						table.remove(objects, j)
 					end

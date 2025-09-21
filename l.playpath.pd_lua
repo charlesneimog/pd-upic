@@ -51,13 +51,14 @@ function playPath:in_1_SvgObj(x)
 		return
 	end
 
-	local system = obj.attr.mainsystem
-	local parent = obj.attr.system
+	local mainsystem = obj.attr.mainsystem
+	local system = obj.attr.system
 	local points = obj.points
 	self.points = {}
 	for i = 1, #points do
 		local this_onset = ((points[i][1] - system.attr.x) / system.attr.width) * system.attr.duration
-		this_onset = round(this_onset - parent.attr.onset)
+		this_onset = round(this_onset)
+
 		if this_onset < 0 then
 			this_onset = 0
 		end
@@ -69,17 +70,19 @@ function playPath:in_1_SvgObj(x)
 		if self.objects[round(this_onset)] == nil then
 			local child = {}
 			child.attr = {}
-			child.attr.fill = obj.attr.fill
-			child.attr.stroke = obj.attr.stroke
-			child.attr["stroke-width"] = obj.attr["stroke-width"]
+			for k, v in ipairs(obj) do
+				child.attr[k] = v
+			end
+			child.attr.mainsystem = mainsystem
+			child.attr.system = system
 
 			child.attr.onset = this_onset
-			child.attr.x = tonumber(points[i][1]) - system.attr.x
-			child.attr.y = tonumber(points[i][2]) - system.attr.y
-			child.attr.rely = 1 - (child.attr.y / system.attr.height)
-			child.attr.relx = child.attr.x / system.attr.width
-			child.attr.maxwidth = tonumber(system.attr.width)
-			child.attr.maxheight = tonumber(system.attr.height)
+			child.attr.x = tonumber(points[i][1])
+			child.attr.y = tonumber(points[i][2])
+			child.attr.rely = 1 - ((child.attr.y - system.attr.y) / system.attr.height)
+			child.attr.relx = (child.attr.x - system.attr.x) / system.attr.width
+			child.attr.maxwidth = tonumber(mainsystem.attr.width)
+			child.attr.maxheight = tonumber(mainsystem.attr.height)
 			self.objects[round(this_onset)] = { child }
 		end
 	end
@@ -92,6 +95,7 @@ end
 -- ─────────────────────────────────────
 function playPath:player()
 	local object = self.objects[self.onset]
+
 	if object ~= nil then
 		if #object == 1 then
 			self:SvgObjOutlet(1, self.outletId, object[1])
@@ -103,7 +107,6 @@ function playPath:player()
 	end
 
 	if self.onset > self.lastonset then
-		self.clock:unset()
 		self.onset = 0
 		self.isplaying = false
 	else

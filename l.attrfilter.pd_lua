@@ -42,6 +42,7 @@ function attrFilter:in_1_SvgObj(x)
 
 	if obj[self.attr] == self.value then
 		self:SvgObjOutlet(1, self.outletId, obj)
+        return
 	end
 
 	local objvalue = obj.attr[self.attr]
