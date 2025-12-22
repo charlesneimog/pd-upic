@@ -14,7 +14,7 @@ local playChilds = pd.Class:new():register("l.playchilds")
 function playChilds:initialize(_, argv)
 	self.inlets = 1
 	self.outlets = 1
-	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
+	self.outletId = mypd.random_string(8)
 	self.clock = pd.Clock:new():register(self, "player")
 	self.playing = false
 	self.onset = 0

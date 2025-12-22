@@ -8,14 +8,14 @@
 
 
 > [!WARNING]  
-> `pd-upic` is distributed as part of the `pd-neimog` library. You need to install `pdlua` first. To do this, open Pure Data, go to Help → Find Externals, then search for and install `pdlua` and `pd-neimog`.
+> `pd-upic` is distributed as part of the `pd-xlab` library. 
 
 
 ## Download and Install
 
 1. Create a new Pure Data patch.
-2. Go to Help → Find Externals → and Search for `pd-upic`.
-3. Create a new object `declare -lib pdlua -path pd-upic`.
+2. Go to Help → Find Externals → and Search for `xlab`.
+3. Create a new object `declare -lib xlab`.
 4. Create one of the objects.
 
    
@@ -52,8 +52,4 @@ Sub-Events are SVGs draw inside SVGs draws.
 ### Paths
 - **`l.getpath`**: Get the complete path of paths.
 - **`l.playpath`**: Play the complete path of paths.
-
-
-
-
 

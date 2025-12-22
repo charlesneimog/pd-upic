@@ -18,8 +18,12 @@ function readSvg:initialize(_, _)
 	self.objects = {}
 	self.objects_count = 0
 	self.clock = pd.Clock:new():register(self, "player")
-	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
+	self.outletId = mypd.random_string(8)
 	self.lastonset = 0
+	self.onset = 0
+	self.span = 5000
+	self:set_size(400, 100)
+
 	return true
 end
 
@@ -494,6 +498,7 @@ function readSvg:in_1_read(x)
 		return
 	end
 	pd.post("[u.readsvg] Found " .. self.objects_count .. " objects\n")
+	self:repaint()
 end
 
 -- ─────────────────────────────────────
@@ -535,15 +540,119 @@ function readSvg:player()
 	else
 		self.onset = self.onset + 1
 		self.clock:delay(1)
+		if self.onset % 30 == 0 then
+			self:repaint(2)
+		end
 	end
 end
 
 -- ─────────────────────────────────────
 function readSvg:in_1_reload()
 	self:dofilex(self._scriptname)
+	self:initialize()
 end
 
 -- ─────────────────────────────────────
 function readSvg:finalize()
 	pd[self.outletId] = nil
+end
+
+--╭─────────────────────────────────────╮
+--│                PAINT                │
+--╰─────────────────────────────────────╯
+local function hex_to_rgba(hex)
+	if not hex or type(hex) ~= "string" then
+		return 0, 0, 0, 1
+	end
+
+	hex = hex:gsub("#", "")
+
+	if #hex == 3 then
+		local r = tonumber(hex:sub(1, 1) .. hex:sub(1, 1), 16)
+		local g = tonumber(hex:sub(2, 2) .. hex:sub(2, 2), 16)
+		local b = tonumber(hex:sub(3, 3) .. hex:sub(3, 3), 16)
+		return r, g, b, 255
+	elseif #hex == 6 then
+		local r = tonumber(hex:sub(1, 2), 16)
+		local g = tonumber(hex:sub(3, 4), 16)
+		local b = tonumber(hex:sub(5, 6), 16)
+		return r, g, b, 255
+	elseif #hex == 8 then
+		local r = tonumber(hex:sub(1, 2), 16)
+		local g = tonumber(hex:sub(3, 4), 16)
+		local b = tonumber(hex:sub(5, 6), 16)
+		local a = tonumber(hex:sub(7, 8), 16)
+		return r, g, b, a
+	end
+
+	return 0, 0, 0, 1
+end
+
+-- ─────────────────────────────────────
+local function set_style_color(g, color)
+	if type(color) == "string" and color:sub(1, 1) == "#" then
+		local r, g_, b, a = hex_to_rgba(color)
+		g:set_color(r, g_, b, a or 1)
+	else
+		g:set_color(0, 0, 0, 1)
+	end
+end
+
+-- ─────────────────────────────────────
+function readSvg:paint(g)
+	local w, h = self:get_size()
+
+	local t0 = self.onset
+	local t1 = self.onset + self.span
+	local time_span = t1 - t0
+
+	for onset, objs in pairs(self.objects) do
+		if onset >= t0 and onset <= t1 then
+			local x = ((onset - t0) / time_span) * w
+
+			for _, obj in ipairs(objs) do
+				if obj.name == "ellipse" or obj.name == "circle" then
+					local y = h * (1 - obj.attr.rely)
+					local rx = obj.attr.relx * w
+					local ry = obj.attr.rely * h
+					set_style_color(g, obj.attr.fill)
+					g:fill_ellipse(x - rx, y, rx, ry)
+				elseif obj.name == "rect" then
+					local sw = obj.attr.system.attr.width
+					local sh = obj.attr.system.attr.height
+
+					local sx = obj.attr.system.attr.x
+					local sy = obj.attr.system.attr.y
+					local propw = w / sw
+					local proph = h / sh
+					local y = h * (1 - obj.attr.rely)
+					if obj.attr.fill ~= "none" then
+						set_style_color(g, obj.attr.fill)
+						g:fill_rect(x, y, obj.attr.width * propw, obj.attr.height * proph)
+					if obj.attr.stroke ~= "none" then
+						set_style_color(g, obj.attr.stroke)
+						g:stroke_rect(x, y, obj.attr.width * propw, obj.attr.height * proph, 1)
+					end
+                    -- for _, objc in ipairs(obj.childs) do
+                    --     self:drawChilds(g,obj)
+                    -- end
+
+				elseif obj.name == "path" then
+					pd.post("path not implemented")
+				end
+			end
+		end
+	end
+
+	g:set_color(0, 0, 0)
+	g:stroke_rect(0, 0, w, h, 2)
+end
+
+-- ─────────────────────────────────────
+function readSvg:paint_layer_2(g)
+	local w, h = self:get_size()
+	local pos = self.onset / self.span * w
+
+	g:set_color(0, 0, 0)
+	g:draw_line(pos, 2, pos, h - 2, 1)
 end
