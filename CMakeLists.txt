@@ -11,4 +11,6 @@ include(${PDCMAKE_FILE})
 add_custom_target(upic COMMAND echo "Installing dependencies from upic...")
 
 file(GLOB UPIC_LUA_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.pd_lua")
+file(GLOB UPIC_SLAXDOM "${CMAKE_CURRENT_SOURCE_DIR}/src/libs/*")
 pd_add_datafile(upic "${UPIC_LUA_FILES}")
+pd_add_datafile(upic "${UPIC_SLAXDOM}")

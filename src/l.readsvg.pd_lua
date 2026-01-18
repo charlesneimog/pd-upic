@@ -629,14 +629,10 @@ function readSvg:paint(g)
 					if obj.attr.fill ~= "none" then
 						set_style_color(g, obj.attr.fill)
 						g:fill_rect(x, y, obj.attr.width * propw, obj.attr.height * proph)
-					if obj.attr.stroke ~= "none" then
+					elseif obj.attr.stroke ~= "none" then
 						set_style_color(g, obj.attr.stroke)
 						g:stroke_rect(x, y, obj.attr.width * propw, obj.attr.height * proph, 1)
 					end
-                    -- for _, objc in ipairs(obj.childs) do
-                    --     self:drawChilds(g,obj)
-                    -- end
-
 				elseif obj.name == "path" then
 					pd.post("path not implemented")
 				end
