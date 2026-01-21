@@ -3,7 +3,7 @@ local function script_path()
 	return str:match("(.*[/\\])") or "./"
 end
 
-local mypd = require(script_path() .. "libs/mypd")
+local mypd = require(script_path() .. "SLAXML/mypd")
 
 --╭─────────────────────────────────────╮
 --│               Helpers               │

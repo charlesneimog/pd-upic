@@ -2,7 +2,7 @@ local function script_path()
 	local str = debug.getinfo(2, "S").source:sub(2)
 	return str:match("(.*[/\\])") or "./"
 end
-local mypd = require(script_path() .. "/libs/mypd")
+local mypd = require(script_path() .. "/SLAXML/mypd")
 
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
