@@ -10,3 +10,6 @@ include(${PDCMAKE_FILE})
 
 add_custom_target(upic COMMAND echo "Installing dependencies from upic...")
 pd_add_datafile(upic "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+
+file(GLOB UPIC_RESOURCES_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*")
+pd_add_datafile(upic "${UPIC_RESOURCES_FILES}")

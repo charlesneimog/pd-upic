@@ -1,6 +1,6 @@
 -- Optional parser that creates a flat DOM from parsing
 
-local SLAXML = require 'libs/slaxml'
+local SLAXML = require 'SLAXML/slaxml'
 function SLAXML:dom(xml,opts)
 	if not opts then opts={} end
 	local rich = not opts.simple
