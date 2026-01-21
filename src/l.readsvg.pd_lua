@@ -12,7 +12,7 @@ local mypd = require(script_path() .. "libs/mypd")
 
 local readSvg = pd.Class:new():register("l.readsvg")
 
-function readSvg:initialize(_, _)
+function readSvg:initialize(name, sel)
 	self.inlets = 1
 	self.outlets = 1
 	self.objects = {}
@@ -22,7 +22,7 @@ function readSvg:initialize(_, _)
 	self.lastonset = 0
 	self.onset = 0
 	self.span = 5000
-	self:set_size(400, 100)
+	-- self:set_size(400, 100)
 
 	return true
 end
@@ -390,15 +390,15 @@ function readSvg:in_1_read(x)
 		return
 	end
 
-	-- read svg file
+	--╭─────────────────────────────────────╮
+	--│            read svg file            │
+	--╰─────────────────────────────────────╯
 	local xml = file:read("*all")
 	local ok = file:close()
 	if not ok then
 		self:error("[u.readsvg] Error closing file!")
 		return
 	end
-
-	-- parse svg file
 	local doc = slaxml:dom(xml)
 	local goodelem = { rect = true, circle = true, ellipse = true, path = true }
 	local objs = {}
@@ -409,7 +409,6 @@ function readSvg:in_1_read(x)
 				table.insert(objs, node)
 			end
 		end
-
 		if node.kids then
 			for _, child in ipairs(node.kids) do
 				traverse(child)
@@ -418,12 +417,13 @@ function readSvg:in_1_read(x)
 	end
 	traverse(doc.root)
 
+	-- parse itens style
 	for _, node in ipairs(objs) do
 		self:parseStyle(node, node.attr.style)
 	end
 
-	local systems = {} -- all systems
-	local objects = {} -- all objects that are not systems
+	local systems = {}
+	local objects = {}
 
 	-- get all systems
 	local systemCount = 0
@@ -442,6 +442,7 @@ function readSvg:in_1_read(x)
 		end
 	end
 
+	-- get all systems
 	for _, system in ipairs(systems) do
 		self:getObjDesc(system)
 		if not system.attr.onset or not system.attr.duration then
@@ -460,6 +461,7 @@ function readSvg:in_1_read(x)
 				object.attr.rely = 1 - ((object.attr.y - system.attr.y) / system.attr.height)
 				object.attr.relx = (object.attr.x - system.attr.x) / system.attr.width
 				object.attr.system = system
+				pd.post(object.attr.rely)
 				local onset = self:round(object.attr.onset)
 				if onset > self.lastonset then
 					self.lastonset = onset
@@ -599,56 +601,56 @@ local function set_style_color(g, color)
 end
 
 -- ─────────────────────────────────────
-function readSvg:paint(g)
-	local w, h = self:get_size()
-
-	local t0 = self.onset
-	local t1 = self.onset + self.span
-	local time_span = t1 - t0
-
-	for onset, objs in pairs(self.objects) do
-		if onset >= t0 and onset <= t1 then
-			local x = ((onset - t0) / time_span) * w
-
-			for _, obj in ipairs(objs) do
-				if obj.name == "ellipse" or obj.name == "circle" then
-					local y = h * (1 - obj.attr.rely)
-					local rx = obj.attr.relx * w
-					local ry = obj.attr.rely * h
-					set_style_color(g, obj.attr.fill)
-					g:fill_ellipse(x - rx, y, rx, ry)
-				elseif obj.name == "rect" then
-					local sw = obj.attr.system.attr.width
-					local sh = obj.attr.system.attr.height
-
-					local sx = obj.attr.system.attr.x
-					local sy = obj.attr.system.attr.y
-					local propw = w / sw
-					local proph = h / sh
-					local y = h * (1 - obj.attr.rely)
-					if obj.attr.fill ~= "none" then
-						set_style_color(g, obj.attr.fill)
-						g:fill_rect(x, y, obj.attr.width * propw, obj.attr.height * proph)
-					elseif obj.attr.stroke ~= "none" then
-						set_style_color(g, obj.attr.stroke)
-						g:stroke_rect(x, y, obj.attr.width * propw, obj.attr.height * proph, 1)
-					end
-				elseif obj.name == "path" then
-					pd.post("path not implemented")
-				end
-			end
-		end
-	end
-
-	g:set_color(0, 0, 0)
-	g:stroke_rect(0, 0, w, h, 2)
-end
-
--- ─────────────────────────────────────
-function readSvg:paint_layer_2(g)
-	local w, h = self:get_size()
-	local pos = self.onset / self.span * w
-
-	g:set_color(0, 0, 0)
-	g:draw_line(pos, 2, pos, h - 2, 1)
-end
+-- function readSvg:paint(g)
+-- 	local w, h = self:get_size()
+--
+-- 	local t0 = self.onset
+-- 	local t1 = self.onset + self.span
+-- 	local time_span = t1 - t0
+--
+-- 	for onset, objs in pairs(self.objects) do
+-- 		if onset >= t0 and onset <= t1 then
+-- 			local x = ((onset - t0) / time_span) * w
+--
+-- 			for _, obj in ipairs(objs) do
+-- 				if obj.name == "ellipse" or obj.name == "circle" then
+-- 					local y = h * (1 - obj.attr.rely)
+-- 					local rx = obj.attr.relx * w
+-- 					local ry = obj.attr.rely * h
+-- 					set_style_color(g, obj.attr.fill)
+-- 					g:fill_ellipse(x - rx, y, rx, ry)
+-- 				elseif obj.name == "rect" then
+-- 					local sw = obj.attr.system.attr.width
+-- 					local sh = obj.attr.system.attr.height
+--
+-- 					local sx = obj.attr.system.attr.x
+-- 					local sy = obj.attr.system.attr.y
+-- 					local propw = w / sw
+-- 					local proph = h / sh
+-- 					local y = h * (1 - obj.attr.rely)
+-- 					if obj.attr.fill ~= "none" then
+-- 						set_style_color(g, obj.attr.fill)
+-- 						g:fill_rect(x, y, obj.attr.width * propw, obj.attr.height * proph)
+-- 					elseif obj.attr.stroke ~= "none" then
+-- 						set_style_color(g, obj.attr.stroke)
+-- 						g:stroke_rect(x, y, obj.attr.width * propw, obj.attr.height * proph, 1)
+-- 					end
+-- 				elseif obj.name == "path" then
+-- 					pd.post("path not implemented")
+-- 				end
+-- 			end
+-- 		end
+-- 	end
+--
+-- 	g:set_color(0, 0, 0)
+-- 	g:stroke_rect(0, 0, w, h, 2)
+-- end
+--
+-- -- ─────────────────────────────────────
+-- function readSvg:paint_layer_2(g)
+-- 	local w, h = self:get_size()
+-- 	local pos = self.onset / self.span * w
+--
+-- 	g:set_color(0, 0, 0)
+-- 	g:draw_line(pos, 2, pos, h - 2, 1)
+-- end

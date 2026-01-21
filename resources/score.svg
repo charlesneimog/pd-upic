@@ -7,7 +7,7 @@
    viewBox="0 0 210 500"
    version="1.1"
    id="svg1"
-   inkscape:version="1.4.1 (93de688d07, 2025-03-30)"
+   inkscape:version="1.4.3 (0d15f75042, 2025-12-25)"
    sodipodi:docname="score.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -23,11 +23,11 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.5194643"
-     inkscape:cx="396.85039"
-     inkscape:cy="329.72147"
+     inkscape:zoom="1.0980504"
+     inkscape:cx="342.88044"
+     inkscape:cy="382.04076"
      inkscape:window-width="1888"
-     inkscape:window-height="1035"
+     inkscape:window-height="1164"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -89,7 +89,7 @@
        x="2.6090291"
        y="28.493614">
       <desc
-         id="desc4">duration 1000, start 0,</desc>
+         id="desc4">duration 1000, onset 0,</desc>
     </rect>
     <rect
        style="fill:#00c800;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.264583"
@@ -117,11 +117,11 @@
        x="125.65412"
        y="31.757727" />
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#ffffff;stroke-width:0.195;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:none;fill-rule:evenodd;stroke:#e425c1;stroke-width:0.195;stroke-dasharray:none;stroke-opacity:0.97998297"
        d="m 128.36488,50.678993 c 2.69558,-1.981615 5.72474,-3.648739 8.82369,-5.263811 3.04676,-1.587873 6.40618,-3.396652 9.78279,-4.552484 0.73433,-0.25137 1.53723,-0.373518 2.30183,-0.569061 3.57978,-0.915516 6.29582,-2.008629 9.78278,-0.28453 2.41285,1.193014 4.30403,2.907609 6.33004,4.410218 1.28039,0.949621 2.63043,1.849307 4.02821,2.703038 0.28672,0.175131 1.50167,0.87539 2.11,0.711325 1.02106,-0.275373 2.41046,-1.760678 2.87729,-2.418506 2.41195,-3.398819 -0.19374,-0.190902 1.53455,-2.987569 1.61673,-2.616131 4.06006,-4.987547 7.8646,-5.975136 0.6881,-0.178617 1.41566,-0.262006 2.11001,-0.426794 2.00697,-0.476319 4.38245,-1.504685 6.52186,-0.711327"
        id="path5-3" />
     <ellipse
-       style="fill:#00ffff;fill-rule:evenodd;stroke:none;stroke-width:0.195;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#ff0064;fill-rule:evenodd;stroke:none;stroke-width:0.195;stroke-dasharray:none;stroke-opacity:1;fill-opacity:1"
        id="path6-1"
        cx="181.42206"
        cy="50.465603"

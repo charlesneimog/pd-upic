@@ -20,6 +20,7 @@ function attrGet:initialize(_, argv)
 		return false
 	end
 	self.attr = argv
+	pd.post(argv[1])
 	self.outlets = #argv
 	return true
 end
@@ -30,13 +31,17 @@ function attrGet:in_1_SvgObj(x)
 	local obj = pd[id]
 
 	if obj == nil then
-		self:error("[u.attrget] No object found!")
+		self:error("[l.attrget] No object found!")
 		return
+	end
+
+	for k, v in pairs(obj.attr) do
+		pd.post(k)
 	end
 
 	for i = #self.attr, 1, -1 do
 		local objvalue = obj.attr[self.attr[i]]
-        if self.attr[i] == "childs" then
+		if self.attr[i] == "childs" then
 			for _, v in pairs(obj.attr.childs) do
 				self:SvgObjOutlet(i, self.outletId, v)
 			end
