@@ -1,14 +1,8 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
-local mypd = require(script_path() .. "/SLAXML/mypd")
-
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-
 local attrgetall = pd.Class:new():register("l.attrgetall")
+local dddd = require("dddd")
 
 -- ─────────────────────────────────────
 function attrgetall:initialize(_, argv)
@@ -43,9 +37,9 @@ end
 --╭─────────────────────────────────────╮
 --│               Methods               │
 --╰─────────────────────────────────────╯
-function attrgetall:in_1_SvgObj(x)
+function attrgetall:in_1_dddd(x)
 	local id = x[1]
-	local obj = pd[id]
+	local obj = dddd:new_fromid(self, id):get_table()
 
 	-- Print all attributes
 	for k, v in pairs(obj) do

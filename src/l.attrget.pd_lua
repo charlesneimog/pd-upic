@@ -1,14 +1,8 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
-local mypd = require(script_path() .. "/SLAXML/mypd")
-
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-
 local attrGet = pd.Class:new():register("l.attrget")
+local dddd = require("dddd")
 
 -- ─────────────────────────────────────
 function attrGet:initialize(_, argv)
@@ -20,37 +14,35 @@ function attrGet:initialize(_, argv)
 		return false
 	end
 	self.attr = argv
-	pd.post(argv[1])
 	self.outlets = #argv
 	return true
 end
 
 -- ─────────────────────────────────────
-function attrGet:in_1_SvgObj(x)
+function attrGet:in_1_dddd(x)
 	local id = x[1]
-	local obj = pd[id]
+	local dddd_table = dddd:new_fromid(self, id)
+    local obj = dddd_table:get_table()
 
 	if obj == nil then
 		self:error("[l.attrget] No object found!")
 		return
 	end
 
-	for k, v in pairs(obj.attr) do
-		pd.post(k)
-	end
-
 	for i = #self.attr, 1, -1 do
 		local objvalue = obj.attr[self.attr[i]]
 		if self.attr[i] == "childs" then
 			for _, v in pairs(obj.attr.childs) do
-				self:SvgObjOutlet(i, self.outletId, v)
+				local out_dddd = dddd:new_fromtable(self, v)
+				out_dddd:output(1)
 			end
 			return
 		end
 
 		if objvalue then
 			if type(objvalue) == "table" then
-				self:SvgObjOutlet(i, self.outletId, objvalue)
+				local out_dddd = dddd:new_fromtable(self, objvalue)
+				out_dddd:output(1)
 			else
 				self:outlet(i, "list", { objvalue })
 			end
@@ -69,7 +61,8 @@ function attrGet:in_1_SvgObj(x)
 					if is_list then
 						self:outlet(i, "list", objvalue)
 					else
-						self:SvgObjOutlet(i, self.outletId, objvalue)
+						local out_dddd = dddd:new_fromtable(self, objvalue)
+						out_dddd:output(1)
 					end
 				else
 					self:outlet(i, "list", { objvalue })

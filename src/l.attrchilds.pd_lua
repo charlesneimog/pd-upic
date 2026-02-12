@@ -1,14 +1,8 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
-local mypd = require(script_path() .. "/SLAXML/mypd")
-
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-
 local attrChilds = pd.Class:new():register("l.attrchilds")
+local dddd = require("dddd")
 
 -- ─────────────────────────────────────
 function attrChilds:initialize(_, argv)
@@ -21,17 +15,23 @@ function attrChilds:initialize(_, argv)
 end
 
 -- ─────────────────────────────────────
-function attrChilds:in_1_SvgObj(x)
+function attrChilds:in_1_dddd(x)
 	local id = x[1]
-	local obj = pd[id]
+	local in_dddd = dddd:new_fromid(self, id)
+	local obj = in_dddd:get_table()
 
 	if not obj then
 		self:error("[u.attrget] No object found!")
 		return
 	end
 
-	for i = 1, #obj.child do
-		self:SvgObjOutlet(1, self.outletId, obj.child[i])
+	if obj.attr == nil or obj.attr.childs == nil then
+		return
+	end
+
+	for i = 1, #obj.attr.childs do
+		local out_dddd = dddd:new_fromtable(self, obj.attr.childs[i])
+		out_dddd:output(1)
 	end
 end
 

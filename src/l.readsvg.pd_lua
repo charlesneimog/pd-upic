@@ -1,29 +1,21 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
-
-local slaxml = require(script_path() .. "SLAXML/slaxdom")
-local mypd = require(script_path() .. "SLAXML/mypd")
-
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-
 local readSvg = pd.Class:new():register("l.readsvg")
 
+local slaxml = require("SLAXML/slaxdom")
+local dddd = require("dddd")
+
+-- ─────────────────────────────────────
 function readSvg:initialize(name, sel)
 	self.inlets = 1
 	self.outlets = 1
 	self.objects = {}
 	self.objects_count = 0
 	self.clock = pd.Clock:new():register(self, "player")
-	self.outletId = mypd.random_string(8)
 	self.lastonset = 0
 	self.onset = 0
 	self.span = 5000
-	-- self:set_size(400, 100)
-
 	return true
 end
 
@@ -40,6 +32,9 @@ end
 
 -- ─────────────────────────────────────
 function readSvg:parseStyle(node, styleString)
+	if not styleString or type(styleString) ~= "string" then
+		return
+	end
 	for pair in string.gmatch(styleString, "([^;]+)") do
 		local key, value = string.match(pair, "([^:]+):(.+)")
 		if key and value then
@@ -83,10 +78,11 @@ function readSvg:applyTransformation(object)
 
 		-- If a matrix is present, apply the transformation to `objX` and `objY`
 		if a and b and c and d and e and f then
+			local x0, y0 = objX, objY
 			-- Apply the matrix transformation to the object's position (cx, cy)
 			-- Matrix transformation: new_x = a * x + c * y + e, new_y = b * x + d * y + f
-			objX = a * objX + c * objY + e
-			objY = b * objX + d * objY + f
+			objX = a * x0 + c * y0 + e
+			objY = b * x0 + d * y0 + f
 		end
 	end
 
@@ -102,25 +98,22 @@ function readSvg:get_path_width(path)
 		return nil
 	end
 
-	local min_x, max_x = nil, nil
+	local points = self:parseSvgPath(d)
+	if not points or #points == 0 then
+		self:error("[u.readsvg] Path not valid")
+		return nil
+	end
 
-	for x_str, _ in string.gmatch(d, "([%-%.%d]+),([%-%.%d]+)") do
-		local x = tonumber(x_str)
-		if x then
-			if not min_x or x < min_x then
-				min_x = x
-			end
-			if not max_x or x > max_x then
-				max_x = x
-			end
+	local min_x, max_x = points[1][1], points[1][1]
+	for i = 2, #points do
+		local x = points[i][1]
+		if x < min_x then
+			min_x = x
+		elseif x > max_x then
+			max_x = x
 		end
 	end
-
-	if min_x and max_x then
-		return max_x - min_x
-	else
-		self:error("[u.readsvg] Path" .. " not valid")
-	end
+	return max_x - min_x
 end
 
 -- ─────────────────────────────────────
@@ -148,19 +141,125 @@ function readSvg:getObjectCoords(object)
 	elseif object.name == "path" then
 		local d = object.attr.d
 		if d then
-			local x, y = string.match(d, "m%s*([%-%.%d]+),([%-%.%d]+)")
-			x = tonumber(x)
-			y = tonumber(y)
-			object.attr.x = x
-			object.attr.y = y
-			object.attr.width = self:get_path_width(object.attr)
-			object.attr.height = 0
-			return 0, 0, x, y
+			local points = object.points or self:parseSvgPath(d)
+			object.points = points
+			if points and #points > 0 then
+				local min_x, max_x = points[1][1], points[1][1]
+				local min_y, max_y = points[1][2], points[1][2]
+				for i = 2, #points do
+					local px, py = points[i][1], points[i][2]
+					if px < min_x then
+						min_x = px
+					elseif px > max_x then
+						max_x = px
+					end
+					if py < min_y then
+						min_y = py
+					elseif py > max_y then
+						max_y = py
+					end
+				end
+
+				object.attr.x = points[1][1]
+				object.attr.y = points[1][2]
+				object.attr.width = max_x - min_x
+				object.attr.height = max_y - min_y
+				return object.attr.width, object.attr.height, object.attr.x, object.attr.y
+			end
 		end
 		self:error("[u.readsvg] not valid path")
 	else
 		self:error("[u.readsvg] " .. object.name .. " not implemented")
 	end
+end
+
+-- ─────────────────────────────────────
+-- SVG path parsing (minimal, practical subset)
+-- Supports: M/m, L/l, H/h, V/v, C/c, S/s, Q/q, T/t, Z/z
+function readSvg:tokenizeSvgPath(d)
+	local tokens = {}
+	if not d or type(d) ~= "string" then
+		return tokens
+	end
+
+	local i = 1
+	local n = #d
+	while i <= n do
+		local ch = d:sub(i, i)
+		if ch:match("%s") or ch == "," then
+			i = i + 1
+		elseif ch:match("[A-Za-z]") then
+			table.insert(tokens, ch)
+			i = i + 1
+		elseif ch == "-" or ch == "+" or ch == "." or ch:match("%d") then
+			local start_i = i
+			local s = ""
+
+			if ch == "-" or ch == "+" then
+				s = s .. ch
+				i = i + 1
+				ch = d:sub(i, i)
+			end
+
+			while i <= n and d:sub(i, i):match("%d") do
+				s = s .. d:sub(i, i)
+				i = i + 1
+			end
+
+			if i <= n and d:sub(i, i) == "." then
+				s = s .. "."
+				i = i + 1
+				while i <= n and d:sub(i, i):match("%d") do
+					s = s .. d:sub(i, i)
+					i = i + 1
+				end
+			end
+
+			if i <= n and (d:sub(i, i) == "e" or d:sub(i, i) == "E") then
+				local exp_mark = d:sub(i, i)
+				i = i + 1
+				local exp_sign = ""
+				if i <= n and (d:sub(i, i) == "-" or d:sub(i, i) == "+") then
+					exp_sign = d:sub(i, i)
+					i = i + 1
+				end
+				local exp_digits = ""
+				while i <= n and d:sub(i, i):match("%d") do
+					exp_digits = exp_digits .. d:sub(i, i)
+					i = i + 1
+				end
+				if exp_digits ~= "" then
+					s = s .. exp_mark .. exp_sign .. exp_digits
+				end
+			end
+
+			local num = tonumber(s)
+			if num ~= nil then
+				table.insert(tokens, num)
+			else
+				-- fail-safe: avoid infinite loop
+				i = start_i + 1
+			end
+		else
+			i = i + 1
+		end
+	end
+
+	return tokens
+end
+
+-- ─────────────────────────────────────
+function readSvg:quadraticBezier(p0, p1, p2, numPoints)
+	numPoints = numPoints or 50
+	local points = {}
+	for i = 0, numPoints do
+		local t = i / numPoints
+		local mt = 1 - t
+		local x = mt * mt * p0[1] + 2 * mt * t * p1[1] + t * t * p2[1]
+		local y = mt * mt * p0[2] + 2 * mt * t * p1[2] + t * t * p2[2]
+		table.insert(points, { tonumber(x), tonumber(y) })
+	end
+	return points
 end
 
 -- ─────────────────────────────────────
@@ -221,53 +320,225 @@ end
 
 -- ─────────────────────────────────────
 function readSvg:parseSvgPath(svgPath)
-	local commands = {}
-	local currentPosition = { 0, 0 }
-
-	-- Split the path into commands and parameters
-	for cmd, params in svgPath:gmatch("([mc])%s*([^mc]+)") do
-		local points = {}
-		for x, y in params:gmatch("([%d%.%-]+),([%d%.%-]+)") do
-			table.insert(points, { tonumber(x), tonumber(y) })
-		end
-		table.insert(commands, { cmd = cmd, points = points })
+	local tokens = self:tokenizeSvgPath(svgPath)
+	if #tokens == 0 then
+		return {}
 	end
 
-	-- Generate Bézier points
-	local generatedPoints = {}
-	for _, command in ipairs(commands) do
-		if command.cmd == "m" then
-			-- Update current position (move command)
-			currentPosition[1] = currentPosition[1] + command.points[1][1]
-			currentPosition[2] = currentPosition[2] + command.points[1][2]
-		elseif command.cmd == "c" then
-			for i = 1, #command.points, 3 do
-				local control1 = {
-					currentPosition[1] + command.points[i][1],
-					currentPosition[2] + command.points[i][2],
-				}
-				local control2 = {
-					currentPosition[1] + command.points[i + 1][1],
-					currentPosition[2] + command.points[i + 1][2],
-				}
-				local endPoint = {
-					currentPosition[1] + command.points[i + 2][1],
-					currentPosition[2] + command.points[i + 2][2],
-				}
+	local points = {}
+	local i = 1
+	local cmd = nil
+	local cx, cy = 0, 0
+	local sx, sy = 0, 0
+	local last_c2x, last_c2y = nil, nil
+	local last_qcx, last_qcy = nil, nil
 
-				-- Generate Bézier curve points
-				local bezierPoints = self:cubicBezier(currentPosition, control1, control2, endPoint, 50)
-				for _, point in ipairs(bezierPoints) do
-					table.insert(generatedPoints, point)
+	local function add_point(x, y)
+		table.insert(points, { x, y })
+	end
+
+	local function is_cmd(tok)
+		return type(tok) == "string" and tok:match("^[A-Za-z]$") ~= nil
+	end
+
+	local function peek()
+		return tokens[i]
+	end
+
+	local function next_number()
+		local tok = tokens[i]
+		if type(tok) ~= "number" then
+			return nil
+		end
+		i = i + 1
+		return tok
+	end
+
+	local function line_to(x, y)
+		cx, cy = x, y
+		add_point(cx, cy)
+		last_c2x, last_c2y = nil, nil
+		last_qcx, last_qcy = nil, nil
+	end
+
+	local function cubic_to(x1, y1, x2, y2, x, y)
+		local bez = self:cubicBezier({ cx, cy }, { x1, y1 }, { x2, y2 }, { x, y }, 50)
+		for j = 2, #bez do
+			add_point(bez[j][1], bez[j][2])
+		end
+		cx, cy = x, y
+		last_c2x, last_c2y = x2, y2
+		last_qcx, last_qcy = nil, nil
+	end
+
+	local function quad_to(x1, y1, x, y)
+		local bez = self:quadraticBezier({ cx, cy }, { x1, y1 }, { x, y }, 50)
+		for j = 2, #bez do
+			add_point(bez[j][1], bez[j][2])
+		end
+		cx, cy = x, y
+		last_qcx, last_qcy = x1, y1
+		last_c2x, last_c2y = nil, nil
+	end
+
+	while i <= #tokens do
+		if is_cmd(peek()) then
+			cmd = peek()
+			i = i + 1
+		elseif cmd == nil then
+			-- invalid path
+			break
+		end
+
+		local lower = cmd:lower()
+		local rel = (cmd == lower)
+
+		if lower == "m" then
+			local x = next_number()
+			local y = next_number()
+			if x == nil or y == nil then
+				break
+			end
+			if rel then
+				x, y = cx + x, cy + y
+			end
+			cx, cy = x, y
+			sx, sy = x, y
+			add_point(cx, cy)
+			last_c2x, last_c2y = nil, nil
+			last_qcx, last_qcy = nil, nil
+
+			-- Subsequent pairs are treated as implicit lineto
+			while type(peek()) == "number" do
+				local lx = next_number()
+				local ly = next_number()
+				if lx == nil or ly == nil then
+					break
 				end
-
-				-- Update current position
-				currentPosition = endPoint
+				if rel then
+					lx, ly = cx + lx, cy + ly
+				end
+				line_to(lx, ly)
+			end
+		elseif lower == "l" then
+			while true do
+				local x = next_number()
+				local y = next_number()
+				if x == nil or y == nil then
+					break
+				end
+				if rel then
+					x, y = cx + x, cy + y
+				end
+				line_to(x, y)
+			end
+		elseif lower == "h" then
+			while true do
+				local x = next_number()
+				if x == nil then
+					break
+				end
+				if rel then
+					x = cx + x
+				end
+				line_to(x, cy)
+			end
+		elseif lower == "v" then
+			while true do
+				local y = next_number()
+				if y == nil then
+					break
+				end
+				if rel then
+					y = cy + y
+				end
+				line_to(cx, y)
+			end
+		elseif lower == "c" then
+			while true do
+				local x1 = next_number()
+				local y1 = next_number()
+				local x2 = next_number()
+				local y2 = next_number()
+				local x = next_number()
+				local y = next_number()
+				if x1 == nil or y1 == nil or x2 == nil or y2 == nil or x == nil or y == nil then
+					break
+				end
+				if rel then
+					x1, y1 = cx + x1, cy + y1
+					x2, y2 = cx + x2, cy + y2
+					x, y = cx + x, cy + y
+				end
+				cubic_to(x1, y1, x2, y2, x, y)
+			end
+		elseif lower == "s" then
+			while true do
+				local x2 = next_number()
+				local y2 = next_number()
+				local x = next_number()
+				local y = next_number()
+				if x2 == nil or y2 == nil or x == nil or y == nil then
+					break
+				end
+				local x1, y1
+				if last_c2x ~= nil and last_c2y ~= nil then
+					x1 = 2 * cx - last_c2x
+					y1 = 2 * cy - last_c2y
+				else
+					x1, y1 = cx, cy
+				end
+				if rel then
+					x2, y2 = cx + x2, cy + y2
+					x, y = cx + x, cy + y
+				end
+				cubic_to(x1, y1, x2, y2, x, y)
+			end
+		elseif lower == "q" then
+			while true do
+				local x1 = next_number()
+				local y1 = next_number()
+				local x = next_number()
+				local y = next_number()
+				if x1 == nil or y1 == nil or x == nil or y == nil then
+					break
+				end
+				if rel then
+					x1, y1 = cx + x1, cy + y1
+					x, y = cx + x, cy + y
+				end
+				quad_to(x1, y1, x, y)
+			end
+		elseif lower == "t" then
+			while true do
+				local x = next_number()
+				local y = next_number()
+				if x == nil or y == nil then
+					break
+				end
+				local x1, y1
+				if last_qcx ~= nil and last_qcy ~= nil then
+					x1 = 2 * cx - last_qcx
+					y1 = 2 * cy - last_qcy
+				else
+					x1, y1 = cx, cy
+				end
+				if rel then
+					x, y = cx + x, cy + y
+				end
+				quad_to(x1, y1, x, y)
+			end
+		elseif lower == "z" then
+			line_to(sx, sy)
+		else
+			-- Unsupported command (A/a etc). Skip numbers until next command.
+			while type(peek()) == "number" do
+				i = i + 1
 			end
 		end
 	end
 
-	return generatedPoints
+	return points
 end
 
 -- ─────────────────────────────────────
@@ -339,7 +610,7 @@ function readSvg:nestedObjects(objects, mainsystem)
 						table.insert(parent.attr.childs, child)
 						table.remove(objects, j)
 					elseif child ~= parent and child.name == "path" and self:pathIsInside(parent, child) then
-						child.attr.size = child["stroke-width"]
+						child.attr.size = child.attr["stroke-width"]
 						child.attr.name = "path"
 						child.attr.mainsystem = mainsystem
 						child.attr.system = parent
@@ -461,7 +732,7 @@ function readSvg:in_1_read(x)
 				object.attr.rely = 1 - ((object.attr.y - system.attr.y) / system.attr.height)
 				object.attr.relx = (object.attr.x - system.attr.x) / system.attr.width
 				object.attr.system = system
-				pd.post(object.attr.rely)
+				-- pd.post(object.attr.rely)
 				local onset = self:round(object.attr.onset)
 				if onset > self.lastonset then
 					self.lastonset = onset
@@ -528,10 +799,15 @@ function readSvg:player()
 	local object = self.objects[self.onset]
 	if object ~= nil then
 		if #object == 1 then
-			self:SvgObjOutlet(1, self.outletId, object[1])
+            if object[1].attr == nil then
+                error("Invalid objects")
+            end
+			local out_dddd = dddd:new_fromtable(self, object[1])
+			out_dddd:output(1)
 		else
 			for i = 1, #object do
-				self:SvgObjOutlet(1, self.outletId, object[i])
+				local out_dddd = dddd:new_fromtable(self, object[i])
+				out_dddd:output(1)
 			end
 		end
 	end

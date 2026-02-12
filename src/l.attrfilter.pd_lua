@@ -1,14 +1,8 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
-local mypd = require(script_path() .. "/SLAXML/mypd")
-
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-
 local attrFilter = pd.Class:new():register("l.attrfilter")
+local dddd = require("dddd")
 
 -- ─────────────────────────────────────
 function attrFilter:initialize(_, argv)
@@ -33,20 +27,25 @@ function attrFilter:initialize(_, argv)
 end
 
 -- ─────────────────────────────────────
-function attrFilter:in_1_SvgObj(x)
-	local obj = pd[x[1]]
+function attrFilter:in_1_dddd(x)
+	local id = x[1]
+	local in_dddd = dddd:new_fromid(self, id)
+	local obj = in_dddd:get_table()
+
 	if not obj then
 		self:error("[u.attrfilter] No object found!")
 		return
 	end
 
 	if obj[self.attr] == self.value then
-		self:SvgObjOutlet(1, self.outletId, obj)
-        return
+		local out_dddd = dddd:new_fromtable(self, obj)
+		out_dddd:output(1)
+		return
 	end
 
 	local objvalue = obj.attr[self.attr]
 	if objvalue == self.value then
-		self:SvgObjOutlet(1, self.outletId, obj)
+		local out_dddd = dddd:new_fromtable(self, obj)
+		out_dddd:output(1)
 	end
 end

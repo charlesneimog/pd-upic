@@ -1,9 +1,20 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
+--╭─────────────────────────────────────╮
+--│          Object Definition          │
+--╰─────────────────────────────────────╯
+local playPath = pd.Class:new():register("l.playpath")
+local dddd = require("dddd")
 
-local mypd = require(script_path() .. "SLAXML/mypd")
+-- ─────────────────────────────────────
+function playPath:initialize(_, _)
+	self.inlets = 1
+	self.outlets = 1
+	self.objects = {}
+	self.clock = pd.Clock:new():register(self, "player")
+	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
+	self.lastonset = 0
+	self.isplaying = false
+	return true
+end
 
 --╭─────────────────────────────────────╮
 --│               Helpers               │
@@ -16,36 +27,17 @@ local function round(num)
 	end
 end
 
---╭─────────────────────────────────────╮
---│          Object Definition          │
---╰─────────────────────────────────────╯
-
-local playPath = pd.Class:new():register("l.playpath")
-
-function playPath:initialize(_, _)
-	self.inlets = 1
-	self.outlets = 1
-	self.objects = {}
-	self.clock = pd.Clock:new():register(self, "player")
-	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
-	self.lastonset = 0
-	self.isplaying = false
-	return true
-end
 -- ─────────────────────────────────────
-function playPath:in_1_reload()
-	self:dofilex(self._scriptname)
-end
-
--- ─────────────────────────────────────
-function playPath:in_1_SvgObj(x)
+function playPath:in_1_dddd(x)
 	if self.isplaying then
 		self:error("[u.playpath] Already playing!")
 		return
 	end
 	self.objects = {}
 
-	local obj = pd[x[1]] -- defined inside mypd
+	local id = x[1]
+	local obj = dddd:new_fromid(self, id):get_table()
+
 	if not obj then
 		self:error("[u.attrfilter] No object found!")
 		return
@@ -55,9 +47,10 @@ function playPath:in_1_SvgObj(x)
 	local system = obj.attr.system
 	local points = obj.points
 	self.points = {}
+	local first_onset = ((points[1][1] - system.attr.x) / system.attr.width) * system.attr.duration
 	for i = 1, #points do
 		local this_onset = ((points[i][1] - system.attr.x) / system.attr.width) * system.attr.duration
-		this_onset = round(this_onset)
+		this_onset = round(this_onset - first_onset)
 
 		if this_onset < 0 then
 			this_onset = 0
@@ -70,8 +63,10 @@ function playPath:in_1_SvgObj(x)
 		if self.objects[round(this_onset)] == nil then
 			local child = {}
 			child.attr = {}
-			for k, v in ipairs(obj) do
-				child.attr[k] = v
+			if obj.attr then
+				for k, v in pairs(obj.attr) do
+					child.attr[k] = v
+				end
 			end
 			child.attr.mainsystem = mainsystem
 			child.attr.system = system
@@ -98,10 +93,12 @@ function playPath:player()
 
 	if object ~= nil then
 		if #object == 1 then
-			self:SvgObjOutlet(1, self.outletId, object[1])
+			local out_dddd = dddd:new_fromtable(self, object[1])
+			out_dddd:output(1)
 		else
 			for i = 1, #object do
-				self:SvgObjOutlet(1, self.outletId, object[i])
+				local out_dddd = dddd:new_fromtable(self, object[i])
+				out_dddd:output(1)
 			end
 		end
 	end

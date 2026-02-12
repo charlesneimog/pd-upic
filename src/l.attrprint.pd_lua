@@ -1,17 +1,11 @@
-local function script_path()
-	local str = debug.getinfo(2, "S").source:sub(2)
-	return str:match("(.*[/\\])") or "./"
-end
-local mypd = require(script_path() .. "/SLAXML/mypd")
-
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-
 local attrPrint = pd.Class:new():register("l.attrprint")
+local dddd = require("dddd")
 
 -- ─────────────────────────────────────
-function attrPrint:initialize(_, argv)
+function attrPrint:initialize(_, _)
 	self.inlets = 1
 	return true
 end
@@ -28,8 +22,10 @@ local function attrprint(k, v)
 	end
 end
 -- ─────────────────────────────────────
-function attrPrint:in_1_SvgObj(x)
-	local obj = pd[x[1]]
+function attrPrint:in_1_dddd(x)
+	local id = x[1]
+	local obj = dddd:new_fromid(self, id):get_table()
+
 	if obj == nil then
 		self:error("[u.attrprint] No object found!")
 		return
@@ -37,9 +33,4 @@ function attrPrint:in_1_SvgObj(x)
 	for k, v in pairs(obj) do
 		attrprint(k, v)
 	end
-end
-
--- ─────────────────────────────────────
-function attrPrint:in_1_reload()
-	self:dofilex(self._scriptname)
 end
