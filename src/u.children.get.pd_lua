@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local attrChilds = pd.Class:new():register("l.attrchilds")
+local attrChilds = pd.Class:new():register("u.children.get")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -21,7 +21,7 @@ function attrChilds:in_1_dddd(x)
 	local obj = in_dddd:get_table()
 
 	if not obj then
-		self:error("[u.attrget] No object found!")
+		self:error("[u.children.get] No object found!")
 		return
 	end
 

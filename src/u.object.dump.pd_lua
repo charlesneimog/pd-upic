@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local attrgetall = pd.Class:new():register("l.attrgetall")
+local attrgetall = pd.Class:new():register("u.object.dump")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────

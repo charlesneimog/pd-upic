@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local readSvg = pd.Class:new():register("l.readsvg")
+local readSvg = pd.Class:new():register("u.svg.read")
 
 local slaxml = require("SLAXML/slaxdom")
 local dddd = require("dddd")
@@ -94,13 +94,13 @@ end
 function readSvg:get_path_width(path)
 	local d = path.d
 	if not d then
-		self:error("[u.readsvg] Path" .. " not valid")
+		self:error("[u.svg.read] Path" .. " not valid")
 		return nil
 	end
 
 	local points = self:parseSvgPath(d)
 	if not points or #points == 0 then
-		self:error("[u.readsvg] Path not valid")
+		self:error("[u.svg.read] Path not valid")
 		return nil
 	end
 
@@ -167,9 +167,9 @@ function readSvg:getObjectCoords(object)
 				return object.attr.width, object.attr.height, object.attr.x, object.attr.y
 			end
 		end
-		self:error("[u.readsvg] not valid path")
+		self:error("[u.svg.read] not valid path")
 	else
-		self:error("[u.readsvg] " .. object.name .. " not implemented")
+		self:error("[u.svg.read] " .. object.name .. " not implemented")
 	end
 end
 
@@ -299,7 +299,7 @@ function readSvg:cubicBezier(onset, control1, control2, endPoint, numPoints)
 	local points = {}
 
 	if numPoints > 10000 then
-		self:error("[u.readsvg] Very long path, avoid this please! I will try to process the path...")
+		self:error("[u.svg.read] Very long path, avoid this please! I will try to process the path...")
 	end
 
 	for i = 0, numPoints do
@@ -647,17 +647,17 @@ function readSvg:in_1_read(x)
 		svgfile = self._canvaspath .. svgfile
 	end
 
-	pd.post("[u.readsvg] Reading SVG file: " .. svgfile)
+	pd.post("[u.svg.read] Reading SVG file: " .. svgfile)
 
 	-- open svg file
 	f = io.open(svgfile, "r")
 	if f == nil then
-		self:error("[u.readsvg] File not found!")
+		self:error("[u.svg.read] File not found!")
 		return
 	end
 	local file = io.open(svgfile, "r")
 	if file == nil then
-		self:error("[u.readsvg] Error opening file!")
+		self:error("[u.svg.read] Error opening file!")
 		return
 	end
 
@@ -667,7 +667,7 @@ function readSvg:in_1_read(x)
 	local xml = file:read("*all")
 	local ok = file:close()
 	if not ok then
-		self:error("[u.readsvg] Error closing file!")
+		self:error("[u.svg.read] Error closing file!")
 		return
 	end
 	local doc = slaxml:dom(xml)
@@ -717,7 +717,7 @@ function readSvg:in_1_read(x)
 	for _, system in ipairs(systems) do
 		self:getObjDesc(system)
 		if not system.attr.onset or not system.attr.duration then
-			self:error("[u.readsvg] System description parameters onset or duration is missing!")
+			self:error("[u.svg.read] System description parameters onset or duration is missing!")
 			return
 		end
 
@@ -767,10 +767,10 @@ function readSvg:in_1_read(x)
 	end
 
 	if self.objects_count == 0 then
-		self:error("[u.readsvg] No objects found!")
+		self:error("[u.svg.read] No objects found!")
 		return
 	end
-	pd.post("[u.readsvg] Found " .. self.objects_count .. " objects\n")
+	pd.post("[u.svg.read] Found " .. self.objects_count .. " objects\n")
 	self:repaint()
 end
 
@@ -782,7 +782,7 @@ function readSvg:in_1_play(args)
 	end
 	self.onset = onset
 	if self.objects_count == 0 then
-		self:error("[u.readsvg] No objects found!")
+		self:error("[u.svg.read] No objects found!")
 		return
 	end
 

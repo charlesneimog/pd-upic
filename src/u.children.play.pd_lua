@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local playChilds = pd.Class:new():register("l.playchildren")
+local playChilds = pd.Class:new():register("u.children.play")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -26,7 +26,7 @@ function playChilds:in_1_dddd(x)
 	self.lastonset = 0
 
 	if obj == nil then
-		self:error("[u.playchilds] No object found!")
+		self:error("[u.children.play] No object found!")
 		return
 	end
 	self.objects = {}

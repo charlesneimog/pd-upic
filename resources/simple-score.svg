@@ -7,7 +7,7 @@
    viewBox="0 0 210 500"
    version="1.1"
    id="svg1"
-   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
    sodipodi:docname="simple-score.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -25,9 +25,9 @@
      inkscape:document-units="mm"
      inkscape:zoom="1.5194643"
      inkscape:cx="410.01292"
-     inkscape:cy="204.34834"
-     inkscape:window-width="1888"
-     inkscape:window-height="1035"
+     inkscape:cy="205.00646"
+     inkscape:window-width="1860"
+     inkscape:window-height="1164"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -89,7 +89,7 @@
        x="2.6090291"
        y="28.493614">
       <desc
-         id="desc4">duration 5000, start 0,</desc>
+         id="desc4">duration 5000, onset 0,</desc>
     </rect>
     <ellipse
        style="fill:#0000ff;stroke-width:0.627346"

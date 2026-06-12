@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local attrPrint = pd.Class:new():register("l.attrprint")
+local attrPrint = pd.Class:new():register("u.object.print")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -27,7 +27,7 @@ function attrPrint:in_1_dddd(x)
 	local obj = dddd:new_from_id(self, id):get_table()
 
 	if obj == nil then
-		self:error("[u.attrprint] No object found!")
+		self:error("[u.object.print] No object found!")
 		return
 	end
 	for k, v in pairs(obj) do

@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local attrGet = pd.Class:new():register("l.attrget")
+local attrGet = pd.Class:new():register("u.attr.get")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -10,7 +10,7 @@ function attrGet:initialize(_, argv)
 	self.objects = {}
 	self.outletId = tostring(self._object):match("userdata: (0x[%x]+)")
 	if argv[1] == nil then
-		self:error("[u.attrfilter] No filter provided!")
+		self:error("[u.attr.get] No attribute provided!")
 		return false
 	end
 	self.attr = argv
@@ -25,7 +25,7 @@ function attrGet:in_1_dddd(x)
     local obj = dddd_table:get_table()
 
 	if obj == nil then
-		self:error("[l.attrget] No object found!")
+		self:error("[u.attr.get] No object found!")
 		return
 	end
 
@@ -68,7 +68,7 @@ function attrGet:in_1_dddd(x)
 					self:outlet(i, "list", { objvalue })
 				end
 			else
-				self:error(string.format("[u.attrget] No attribute '%s' found!", self.attr))
+				self:error(string.format("[u.attr.get] No attribute '%s' found!", self.attr))
 			end
 		end
 	end

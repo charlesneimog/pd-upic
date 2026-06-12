@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local playPath = pd.Class:new():register("l.playpath")
+local playPath = pd.Class:new():register("u.path.play")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -30,7 +30,7 @@ end
 -- ─────────────────────────────────────
 function playPath:in_1_dddd(x)
 	if self.isplaying then
-		self:error("[u.playpath] Already playing!")
+		self:error("[u.path.play] Already playing!")
 		return
 	end
 	self.objects = {}
@@ -39,7 +39,7 @@ function playPath:in_1_dddd(x)
 	local obj = dddd:new_from_id(self, id):get_table()
 
 	if not obj then
-		self:error("[u.attrfilter] No object found!")
+		self:error("[u.path.play] No object found!")
 		return
 	end
 

@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local attrFilter = pd.Class:new():register("l.attrfilter")
+local attrFilter = pd.Class:new():register("u.attr.filter")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -13,12 +13,12 @@ function attrFilter:initialize(_, argv)
 	self.attr = argv[1]
 	self.value = argv[2]
 	if self.attr == nil then
-		self:error("[u.attrfilter] No filter attribute provided! Examples are: 'fill', 'stroke', 'id' and others")
+		self:error("[u.attr.filter] No filter attribute provided! Examples are: 'fill', 'stroke', 'id' and others")
 		return false
 	end
 	if self.value == nil then
 		self:error(
-			"[u.attrfilter] No filter attribute value provided! Examples are: '#ff0000' for stroke or fill, 'path12' for id and others"
+			"[u.attr.filter] No filter attribute value provided! Examples are: '#ff0000' for stroke or fill, 'path12' for id and others"
 		)
 		return false
 	end
@@ -33,7 +33,7 @@ function attrFilter:in_1_dddd(x)
 	local obj = in_dddd:get_table()
 
 	if not obj then
-		self:error("[u.attrfilter] No object found!")
+		self:error("[u.attr.filter] No object found!")
 		return
 	end
 
