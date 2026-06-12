@@ -24,7 +24,7 @@ end
 -- ─────────────────────────────────────
 function attrPrint:in_1_dddd(x)
 	local id = x[1]
-	local obj = dddd:new_fromid(self, id):get_table()
+	local obj = dddd:new_from_id(self, id):get_table()
 
 	if obj == nil then
 		self:error("[u.attrprint] No object found!")

@@ -802,11 +802,11 @@ function readSvg:player()
             if object[1].attr == nil then
                 error("Invalid objects")
             end
-			local out_dddd = dddd:new_fromtable(self, object[1])
+			local out_dddd = dddd:new_from_table(self, object[1])
 			out_dddd:output(1)
 		else
 			for i = 1, #object do
-				local out_dddd = dddd:new_fromtable(self, object[i])
+				local out_dddd = dddd:new_from_table(self, object[i])
 				out_dddd:output(1)
 			end
 		end

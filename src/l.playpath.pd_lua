@@ -36,7 +36,7 @@ function playPath:in_1_dddd(x)
 	self.objects = {}
 
 	local id = x[1]
-	local obj = dddd:new_fromid(self, id):get_table()
+	local obj = dddd:new_from_id(self, id):get_table()
 
 	if not obj then
 		self:error("[u.attrfilter] No object found!")
@@ -93,11 +93,11 @@ function playPath:player()
 
 	if object ~= nil then
 		if #object == 1 then
-			local out_dddd = dddd:new_fromtable(self, object[1])
+			local out_dddd = dddd:new_from_table(self, object[1])
 			out_dddd:output(1)
 		else
 			for i = 1, #object do
-				local out_dddd = dddd:new_fromtable(self, object[i])
+				local out_dddd = dddd:new_from_table(self, object[i])
 				out_dddd:output(1)
 			end
 		end

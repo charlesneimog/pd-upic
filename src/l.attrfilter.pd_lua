@@ -29,7 +29,7 @@ end
 -- ─────────────────────────────────────
 function attrFilter:in_1_dddd(x)
 	local id = x[1]
-	local in_dddd = dddd:new_fromid(self, id)
+	local in_dddd = dddd:new_from_id(self, id)
 	local obj = in_dddd:get_table()
 
 	if not obj then
@@ -38,14 +38,14 @@ function attrFilter:in_1_dddd(x)
 	end
 
 	if obj[self.attr] == self.value then
-		local out_dddd = dddd:new_fromtable(self, obj)
+		local out_dddd = dddd:new_from_table(self, obj)
 		out_dddd:output(1)
 		return
 	end
 
 	local objvalue = obj.attr[self.attr]
 	if objvalue == self.value then
-		local out_dddd = dddd:new_fromtable(self, obj)
+		local out_dddd = dddd:new_from_table(self, obj)
 		out_dddd:output(1)
 	end
 end

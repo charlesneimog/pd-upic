@@ -1,7 +1,7 @@
 --╭─────────────────────────────────────╮
 --│          Object Definition          │
 --╰─────────────────────────────────────╯
-local playChilds = pd.Class:new():register("l.playchilds")
+local playChilds = pd.Class:new():register("l.playchildren")
 local dddd = require("dddd")
 
 -- ─────────────────────────────────────
@@ -19,7 +19,7 @@ end
 -- ─────────────────────────────────────
 function playChilds:in_1_dddd(x)
 	local id = x[1]
-	local obj = dddd:new_fromid(self, id):get_table()
+	local obj = dddd:new_from_id(self, id):get_table()
 
 	self.playing = true
 	self.onset = 0
@@ -57,11 +57,11 @@ function playChilds:player()
 	local object = self.objects[key]
 	if object ~= nil then
 		if #object == 1 then
-			local out_dddd = dddd:new_fromtable(self, object[1])
+			local out_dddd = dddd:new_from_table(self, object[1])
 			out_dddd:output(1)
 		else
 			for i = 1, #object do
-				local out_dddd = dddd:new_fromtable(self, object[i])
+				local out_dddd = dddd:new_from_table(self, object[i])
 				out_dddd:output(1)
 			end
 		end

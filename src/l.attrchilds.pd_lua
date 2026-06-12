@@ -17,7 +17,7 @@ end
 -- ─────────────────────────────────────
 function attrChilds:in_1_dddd(x)
 	local id = x[1]
-	local in_dddd = dddd:new_fromid(self, id)
+	local in_dddd = dddd:new_from_id(self, id)
 	local obj = in_dddd:get_table()
 
 	if not obj then
@@ -30,7 +30,7 @@ function attrChilds:in_1_dddd(x)
 	end
 
 	for i = 1, #obj.attr.childs do
-		local out_dddd = dddd:new_fromtable(self, obj.attr.childs[i])
+		local out_dddd = dddd:new_from_table(self, obj.attr.childs[i])
 		out_dddd:output(1)
 	end
 end

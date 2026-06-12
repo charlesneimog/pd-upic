@@ -21,7 +21,7 @@ end
 -- ─────────────────────────────────────
 function attrGet:in_1_dddd(x)
 	local id = x[1]
-	local dddd_table = dddd:new_fromid(self, id)
+	local dddd_table = dddd:new_from_id(self, id)
     local obj = dddd_table:get_table()
 
 	if obj == nil then
@@ -33,7 +33,7 @@ function attrGet:in_1_dddd(x)
 		local objvalue = obj.attr[self.attr[i]]
 		if self.attr[i] == "childs" then
 			for _, v in pairs(obj.attr.childs) do
-				local out_dddd = dddd:new_fromtable(self, v)
+				local out_dddd = dddd:new_from_table(self, v)
 				out_dddd:output(1)
 			end
 			return
@@ -41,7 +41,7 @@ function attrGet:in_1_dddd(x)
 
 		if objvalue then
 			if type(objvalue) == "table" then
-				local out_dddd = dddd:new_fromtable(self, objvalue)
+				local out_dddd = dddd:new_from_table(self, objvalue)
 				out_dddd:output(1)
 			else
 				self:outlet(i, "list", { objvalue })
@@ -61,7 +61,7 @@ function attrGet:in_1_dddd(x)
 					if is_list then
 						self:outlet(i, "list", objvalue)
 					else
-						local out_dddd = dddd:new_fromtable(self, objvalue)
+						local out_dddd = dddd:new_from_table(self, objvalue)
 						out_dddd:output(1)
 					end
 				else
